@@ -14,8 +14,8 @@
   const loginForm = $("loginForm");
   loginForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    const accountId = $("loginId").value.trim();
-    const pin = $("loginPin").value;
+    const accountId = $("loginId").value.replace(/\s/g, "");
+    const pin = $("loginPin").value.trim();
     if (accountId === SHARED_LOGIN_ID && pin === SHARED_LOGIN_PIN) {
       sessionStorage.setItem("monopoly-bank-demo-auth", "signed-in");
       $("loginError").textContent = "";
@@ -58,10 +58,8 @@
     state.transactions = state.transactions.slice(0,300);
   }
   function render() {
-    $("bankTotal").textContent = money(state.bank);
-    $("playerCount").textContent = state.players.length;
-    $("playerTotal").textContent = money(state.players.reduce((sum,p)=>sum+p.balance,0));
-    $("transactionCount").textContent = state.transactions.length;
+    const signedInAccount = state.players.find(p => p.name.toLowerCase() === "mia marie james") || state.players[0];
+    $("accountBalance").textContent = money(signedInAccount ? signedInAccount.balance : 0);
     $("playersList").innerHTML = state.players.map(p => `
       <div class="player-row">
         <div class="avatar">${safeText(p.name.trim().charAt(0).toUpperCase())}</div>
@@ -132,5 +130,19 @@
     const blob=new Blob([JSON.stringify({app:"Monopoly Bank Account Portal",exportedAt:new Date().toISOString(),...state},null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="monopoly-bank-backup.json";a.click();URL.revokeObjectURL(url);
   });
+  const themeButton = $("themeBtn");
+  const savedTheme = localStorage.getItem("monopoly-bank-theme");
+  if (savedTheme === "light") document.body.classList.add("light-mode");
+  function updateThemeButton() {
+    const light = document.body.classList.contains("light-mode");
+    themeButton.textContent = light ? "☾ Dark mode" : "☀ Light mode";
+    themeButton.setAttribute("aria-label", light ? "Switch to dark mode" : "Switch to light mode");
+  }
+  themeButton.addEventListener("click", () => {
+    document.body.classList.toggle("light-mode");
+    localStorage.setItem("monopoly-bank-theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+    updateThemeButton();
+  });
+  updateThemeButton();
   updateTransactionMode();render();
 })();
