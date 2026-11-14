@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10251e">
+  <meta name="description" content="A virtual bank manager for Monopoly board games.">
+  <title>Monopoly Bank</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Monopoly Bank home"><span class="brand-mark">M</span><span>MONOPOLY <b>BANK</b></span></a>
+    <div class="top-actions"><span class="mode-pill"><i></i> LOCAL GAME</span><button id="exportBtn" class="button button-quiet">Export data</button></div>
+  </header>
+  <main class="shell">
+    <section class="welcome">
+      <div><p class="eyebrow">THE GAME NIGHT TREASURY</p><h1>Bank dashboard</h1><p class="muted">Manage your players, money and every move around the board.</p></div>
+      <button id="newPlayerTop" class="button button-primary">＋ Add player</button>
+    </section>
+    <section class="stats-grid" aria-label="Game totals">
+      <article class="stat-card"><span class="stat-label">Total bank funds</span><strong id="bankTotal">₦0</strong><small>Available in the bank</small></article>
+      <article class="stat-card"><span class="stat-label">Players</span><strong id="playerCount">0</strong><small>Active game accounts</small></article>
+      <article class="stat-card"><span class="stat-label">Money with players</span><strong id="playerTotal">₦0</strong><small>Combined player balances</small></article>
+      <article class="stat-card"><span class="stat-label">Transactions</span><strong id="transactionCount">0</strong><small>Recorded game activity</small></article>
+    </section>
+    <section class="content-grid">
+      <div class="panel players-panel">
+        <div class="panel-heading"><div><p class="eyebrow">YOUR TABLE</p><h2>Player accounts</h2></div><button id="newPlayer" class="button button-outline">＋ Add player</button></div>
+        <div id="playersList" class="players-list"></div>
+        <div id="emptyPlayers" class="empty-state"><div class="empty-icon">♙</div><h3>No players yet</h3><p>Add the players at your table to get started.</p><button id="emptyAdd" class="button button-primary">Create first account</button></div>
+      </div>
+      <aside class="panel action-panel">
+        <p class="eyebrow">BANK COUNTER</p><h2>Make a transaction</h2>
+        <form id="transactionForm">
+          <label for="txType">Transaction type</label>
+          <select id="txType"><option value="deposit">Bank pays player</option><option value="withdraw">Player pays bank</option><option value="transfer">Transfer between players</option></select>
+          <label for="txFrom" id="fromLabel">Player</label><select id="txFrom" required></select>
+          <div id="toGroup" class="hidden"><label for="txTo">Pay to</label><select id="txTo"></select></div>
+          <label for="txAmount">Amount</label><div class="amount-wrap"><span>₦</span><input id="txAmount" type="number" min="1" step="1" placeholder="e.g. 200" required></div>
+          <label for="txNote">Note <span class="optional">(optional)</span></label><input id="txNote" type="text" maxlength="80" placeholder="Rent, salary, tax…">
+          <button class="button button-primary button-full" type="submit">Confirm transaction</button>
+          <p id="formMessage" class="form-message" role="status"></p>
+        </form>
+      </aside>
+    </section>
+    <section class="panel history-panel">
+      <div class="panel-heading"><div><p class="eyebrow">GAME LEDGER</p><h2>Recent transactions</h2></div><button id="clearHistory" class="button button-quiet">Clear history</button></div>
+      <div class="table-scroll"><table><thead><tr><th>Activity</th><th>Player</th><th>Amount</th><th>Date &amp; time</th></tr></thead><tbody id="historyBody"></tbody></table></div>
+      <div id="emptyHistory" class="empty-history">Transactions will appear here as the game progresses.</div>
+    </section>
+    <section class="admin-strip"><div><p class="eyebrow">GAME ADMIN</p><h2>Game controls</h2><p class="muted">Start a fresh game when everyone is ready.</p></div><button id="resetGame" class="button button-danger">Reset game</button></section>
+    <footer><p>Monopoly Bank · Made for board-game nights</p><p>Fictional game money only. Not a real banking service.</p></footer>
+  </main>
+  <dialog id="playerDialog"><form id="playerForm" method="dialog" class="dialog-card"><button type="button" class="dialog-close" id="closePlayer" aria-label="Close">×</button><p class="eyebrow">NEW ACCOUNT</p><h2>Add a player</h2><label for="playerName">Player name</label><input id="playerName" maxlength="32" placeholder="Enter player name" required><label for="startingBalance">Starting balance</label><div class="amount-wrap"><span>₦</span><input id="startingBalance" type="number" min="0" step="1" value="1500" required></div><p id="playerError" class="form-message" role="status"></p><button class="button button-primary button-full" type="submit">Create account</button></form></dialog>
+  <dialog id="confirmDialog"><form method="dialog" class="dialog-card"><p class="eyebrow">PLEASE CONFIRM</p><h2 id="confirmTitle">Are you sure?</h2><p id="confirmText" class="muted"></p><div class="dialog-actions"><button class="button button-outline" value="cancel">Cancel</button><button id="confirmYes" class="button button-danger" value="confirm">Continue</button></div></form></dialog>
+  <script src="app.js"></script>
+</body>
+</html>
