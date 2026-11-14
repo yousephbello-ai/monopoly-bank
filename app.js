@@ -81,7 +81,7 @@
     $("emptyHistory").classList.toggle("hidden",rows.length>0);
   }
   function openPlayerDialog() { $("playerError").textContent=""; $("playerName").value=""; $("startingBalance").value="500000"; $("playerDialog").showModal(); $("playerName").focus(); }
-  ["newPlayer","newPlayerTop","emptyAdd"].forEach(id=>$ (id).addEventListener("click",openPlayerDialog));
+  ["newPlayer","emptyAdd"].forEach(id=>{const button=$(id);if(button)button.addEventListener("click",openPlayerDialog);});
   $("closePlayer").addEventListener("click",()=>$("playerDialog").close());
   $("playerForm").addEventListener("submit",e=>{
     e.preventDefault();
