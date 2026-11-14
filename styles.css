@@ -28,7 +28,7 @@ dialog{border:1px solid #49325d;border-radius:20px;padding:0;width:min(420px,cal
 @media(max-width:480px){.login-card{padding:26px 22px}}
 
 /* Private single-account presentation */
-.players-panel,.admin-strip{display:none!important}
+.players-panel{display:none!important}
 .private-balance{grid-template-columns:minmax(0,420px);margin-top:28px}
 .private-balance .stat-card{background:linear-gradient(145deg,#39204f,#21152f);padding:28px}
 .private-balance .stat-card strong{font-size:clamp(30px,5vw,42px);letter-spacing:-1.5px}
