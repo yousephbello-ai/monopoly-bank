@@ -12,18 +12,28 @@
   let confirmAction = null;
 
   const loginForm = $("loginForm");
-  loginForm.addEventListener("submit", (event) => {
-    event.preventDefault();
+  function signIn() {
     const accountId = $("loginId").value.replace(/\s/g, "");
     const pin = $("loginPin").value.trim();
-    if (accountId === SHARED_LOGIN_ID && pin === SHARED_LOGIN_PIN) {
-      sessionStorage.setItem("monopoly-bank-demo-auth", "signed-in");
-      $("loginError").textContent = "";
-      $("loginScreen").classList.add("hidden");
-      $("appShell").classList.remove("app-locked");
-    } else {
-      $("loginError").textContent = "The account ID or PIN is incorrect.";
+    const error = $("loginError");
+    if (!/^\d{12}$/.test(accountId) || !/^\d{6}$/.test(pin)) {
+      error.textContent = "Enter a 12-digit account ID and a 6-digit PIN.";
+      return;
     }
+    if (accountId !== SHARED_LOGIN_ID || pin !== SHARED_LOGIN_PIN) {
+      error.textContent = "The account ID or PIN is incorrect.";
+      return;
+    }
+    try { sessionStorage.setItem("monopoly-bank-demo-auth", "signed-in"); } catch (_) {}
+    error.textContent = "";
+    $("loginScreen").classList.add("hidden");
+    $("appShell").classList.remove("app-locked");
+    render();
+  }
+  $("loginButton").addEventListener("click", signIn);
+  loginForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    signIn();
   });
   $("logoutBtn").addEventListener("click", () => {
     sessionStorage.removeItem("monopoly-bank-demo-auth");
