@@ -41,7 +41,7 @@
     try {
       const saved = JSON.parse(localStorage.getItem(KEY));
       if (saved && Array.isArray(saved.players) && Array.isArray(saved.transactions) && Number.isFinite(saved.bank)) {
-        saved.transactions = saved.transactions.map(t => ({...t, id: t.id === "MB-DEMO01" ? "MB-OPEN001" : t.id, description: t.description === "Demo starting balance" ? "Opening balance" : t.description}));
+        saved.transactions = saved.transactions.map(t => ({...t, id: t.type === "account" && /starting balance/i.test(t.description || "") ? "MB-OPEN001" : t.id, description: t.type === "account" && /starting balance/i.test(t.description || "") ? "Opening balance" : t.description}));
         if (!saved.players.some(p => p.name.toLowerCase() === "mia marie james")) {
           saved.players.push({id:"MB-MIA001",name:"Mia Marie James",balance:500000});
           if (saved.bank >= 500000) saved.bank -= 500000;
