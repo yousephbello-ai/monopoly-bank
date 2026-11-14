@@ -6,14 +6,30 @@
   <meta name="theme-color" content="#171020">
   <meta name="description" content="Monopoly Bank account management portal.">
   <title>Monopoly Bank</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
-  <section id="loginScreen" class="login-screen"><form id="loginForm" class="login-card"><div class="login-mark">M</div><p class="eyebrow">SECURE ACCOUNT ACCESS</p><h1>Welcome back</h1><p class="login-copy">Sign in with your account ID and six-digit PIN.</p><label for="loginId">12-digit account ID</label><input id="loginId" inputmode="numeric" autocomplete="username" maxlength="12" pattern="[0-9]{12}" placeholder="Enter account ID" required><label for="loginPin">6-digit PIN</label><input id="loginPin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6" pattern="[0-9]{6}" placeholder="Enter PIN" required><p id="loginError" class="form-message" role="alert"></p><button id="loginButton" class="button button-primary button-full" type="button">Sign in</button><p class="login-foot">Monopoly Bank · Secure demo portal</p></form></section>
+  <section id="loginScreen" class="login-screen">
+    <button id="loginThemeBtn" class="button button-quiet login-theme-button" type="button" aria-label="Switch to dark mode">☾ Dark mode</button>
+    <form id="loginForm" class="login-card">
+      <div class="login-mark">M</div>
+      <p class="eyebrow">SECURE ACCOUNT ACCESS</p>
+      <h1>Welcome back</h1>
+      <p class="login-copy">Sign in with your account ID and six-digit PIN.</p>
+      <label for="loginId">12-digit account ID</label>
+      <input id="loginId" inputmode="numeric" autocomplete="username" maxlength="12" pattern="[0-9]{12}" placeholder="Enter account ID" required>
+      <label for="loginPin">6-digit PIN</label>
+      <input id="loginPin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6" pattern="[0-9]{6}" placeholder="Enter PIN" required>
+      <p class="login-hint">Demo account: 482731905614 · PIN: 071999</p>
+      <p id="loginError" class="form-message" role="alert"></p>
+      <button id="loginButton" class="button button-primary button-full" type="submit">Sign in</button>
+      <p class="login-foot">Monopoly Bank · Secure demo portal</p>
+    </form>
+  </section>
   <div id="appShell" class="app-locked">
   <header class="topbar">
     <a class="brand" href="#" aria-label="Monopoly Bank home"><span class="brand-mark">M</span><span>MONOPOLY <b>BANK</b></span></a>
-    <div class="top-actions"><span class="mode-pill"><i></i> ACCOUNT PORTAL</span><button id="themeBtn" class="button button-quiet" type="button" aria-label="Switch to light mode">☀ Light mode</button><button id="logoutBtn" class="button button-quiet">Sign out</button><button id="exportBtn" class="button button-quiet">Export data</button></div>
+    <div class="top-actions"><span class="mode-pill"><i></i> ACCOUNT PORTAL</span><button id="themeBtn" class="button button-quiet" type="button" aria-label="Switch to dark mode">☾ Dark mode</button><button id="logoutBtn" class="button button-quiet">Sign out</button><button id="exportBtn" class="button button-quiet">Export data</button></div>
   </header>
   <main class="shell">
     <section class="welcome">
@@ -48,9 +64,33 @@
     <section class="admin-strip"><div><p class="eyebrow">ADMINISTRATION</p><h2>Administration controls</h2><p class="muted">Manage the account records and system settings.</p></div><button id="resetGame" class="button button-danger">Reset system</button></section>
     <footer><p>Monopoly Bank · Account management</p><p>Demonstration interface. Not a licensed financial institution.</p></footer>
   </main>
-  <dialog id="playerDialog"><form id="playerForm" method="dialog" class="dialog-card"><button type="button" class="dialog-close" id="closePlayer" aria-label="Close">×</button><p class="eyebrow">NEW ACCOUNT</p><h2>Add a customer account</h2><label for="playerName">Customer name</label><input id="playerName" maxlength="32" placeholder="Enter customer name" required><label for="startingBalance">Starting balance</label><div class="amount-wrap"><span>$</span><input id="startingBalance" type="number" min="0" step="1" value="500000" required></div><p id="playerError" class="form-message" role="status"></p><button class="button button-primary button-full" type="submit">Create account</button></form></dialog>
-  <dialog id="confirmDialog"><form method="dialog" class="dialog-card"><p class="eyebrow">PLEASE CONFIRM</p><h2 id="confirmTitle">Are you sure?</h2><p id="confirmText" class="muted"></p><div class="dialog-actions"><button class="button button-outline" value="cancel">Cancel</button><button id="confirmYes" class="button button-danger" value="confirm">Continue</button></div></form></dialog>
+  <dialog id="playerDialog"><form id="playerForm" method="dialog" class="dialog-card"><button type="button" class="dialog-close" id="closePlayer" aria-label="Close">×</button><p class="eyebrow">NEW ACCOUNT</p><h2>Add customer account</h2><label for="playerName">Customer name</label><input id="playerName" required maxlength="60"><label for="startingBalance">Starting balance</label><input id="startingBalance" type="number" min="0" step="1" required><p id="playerError" class="form-message" role="alert"></p><button class="button button-primary button-full" type="submit">Create account</button></form></dialog>
+  <dialog id="confirmDialog"><form method="dialog" class="dialog-card"><p class="eyebrow">PLEASE CONFIRM</p><h2 id="confirmTitle">Are you sure?</h2><p id="confirmText" class="muted"></p><div class="dialog-actions"><button class="button button-quiet" value="cancel">Cancel</button><button id="confirmYes" class="button button-danger" value="confirm">Confirm</button></div></form></dialog>
   </div>
-  <script src="app.js"></script>
+  <script>
+    (() => {
+      const button = document.getElementById('loginThemeBtn');
+      const key = 'monopoly-bank-theme';
+      const setTheme = (theme) => {
+        document.body.classList.toggle('light-mode', theme === 'light');
+        button.textContent = theme === 'light' ? '☀ Light mode' : '☾ Dark mode';
+        button.setAttribute('aria-label', theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode');
+      };
+      let theme = 'light';
+      try { theme = localStorage.getItem(key) === 'dark' ? 'dark' : 'light'; } catch (_) {}
+      setTheme(theme);
+      button.addEventListener('click', () => {
+        theme = document.body.classList.contains('light-mode') ? 'dark' : 'light';
+        setTheme(theme);
+        try { localStorage.setItem(key, theme); } catch (_) {}
+        const dashboardButton = document.getElementById('themeBtn');
+        if (dashboardButton) {
+          dashboardButton.textContent = theme === 'light' ? '☾ Dark mode' : '☀ Light mode';
+          dashboardButton.setAttribute('aria-label', theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode');
+        }
+      });
+    })();
+  </script>
+  <script src="app.js?v=2" defer></script>
 </body>
 </html>
