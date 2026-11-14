@@ -67,12 +67,12 @@
         <div class="avatar">${safeText(p.name.trim().charAt(0).toUpperCase())}</div>
         <div class="player-info"><strong>${safeText(p.name)}</strong><small>Account ID: ${DISPLAY_ACCOUNT_ID}</small></div>
         <div class="player-balance">${money(p.balance)}</div>
-        <div class="player-actions"><button class="icon-button" data-action="pay" data-id="${p.id}" title="Make a payment to this account">Pay</button><button class="icon-button" data-action="remove" data-id="${p.id}" title="Remove player">×</button></div>
+        <div class="player-actions"><button class="icon-button" data-action="pay" data-id="${p.id}" title="Make a payment to this account">Pay</button><button class="icon-button" data-action="remove" data-id="${p.id}" title="Close account">×</button></div>
       </div>`).join("");
     $("emptyPlayers").classList.toggle("hidden",state.players.length>0);
     $("playersList").classList.toggle("hidden",state.players.length===0);
     const opts = state.players.map(p=>`<option value="${p.id}">${safeText(p.name)} — ${money(p.balance)}</option>`).join("");
-    $("txFrom").innerHTML = opts || '<option value="">Add a player account first</option>';
+    $("txFrom").innerHTML = opts || '<option value="">Add a customer account first</option>';
     $("txTo").innerHTML = opts || '<option value="">Add a customer account first</option>';
     const rows = state.transactions.slice(0,20);
     $("historyBody").innerHTML = rows.map(t=>{
@@ -95,7 +95,7 @@
     const player={id:id(),name,balance};
     state.players.push(player);state.bank-=balance;log("account",balance,"Starting balance",name);$("playerDialog").close();save();
   });
-  function updateTransactionMode(){const transfer=$("txType").value==="transfer";$("toGroup").classList.toggle("hidden",!transfer);$("fromLabel").textContent=transfer?"From player": "Player";}
+  function updateTransactionMode(){const transfer=$("txType").value==="transfer";$("toGroup").classList.toggle("hidden",!transfer);$("fromLabel").textContent=transfer?"From account": "Customer account";}
   $("txType").addEventListener("change",updateTransactionMode);
   $("transactionForm").addEventListener("submit",e=>{
     e.preventDefault();const type=$("txType").value,from=playerById($("txFrom").value),amount=Number($("txAmount").value),note=$("txNote").value.trim();
@@ -110,7 +110,7 @@
       from.balance-=amount;state.bank+=amount;log("withdraw",amount,note||"Paid to bank",from.name);
     }else{
       const to=playerById($("txTo").value);
-      if(!to||to.id===from.id){msg.textContent="Choose a different player to receive the transfer.";return;}
+      if(!to||to.id===from.id){msg.textContent="Choose a different account to receive the transfer.";return;}
       if(amount>from.balance){msg.textContent="This account does not have enough funds.";return;}
       from.balance-=amount;to.balance+=amount;log("transfer",amount,note||"Account transfer",from.name,to.name);log("transfer-in",amount,note||"Account transfer",to.name,from.name);
     }
@@ -120,14 +120,14 @@
     const btn=e.target.closest("button[data-action]");if(!btn)return;
     const p=playerById(btn.dataset.id);if(!p)return;
     if(btn.dataset.action==="pay"){$("txType").value="deposit";updateTransactionMode();$("txFrom").value=p.id;$("txAmount").focus();$("transactionForm").scrollIntoView({behavior:"smooth",block:"center"});}
-    if(btn.dataset.action==="remove")ask("Close player account?",`Close ${p.name}’s account? Their remaining balance will return to the bank. This cannot be undone.`,()=>{
+    if(btn.dataset.action==="remove")ask("Close customer account?",`Close ${p.name}’s account? Their remaining balance will return to the bank. This cannot be undone.`,()=>{
       state.bank+=p.balance;state.players=state.players.filter(x=>x.id!==p.id);log("withdraw",p.balance,"Account closed",p.name);save();
     });
   });
   function ask(title,description,action){$("confirmTitle").textContent=title;$("confirmText").textContent=description;confirmAction=action;$("confirmDialog").showModal();}
   $("confirmYes").addEventListener("click",e=>{e.preventDefault();$("confirmDialog").close();if(confirmAction)confirmAction();confirmAction=null;});
-  $("clearHistory").addEventListener("click",()=>{if(!state.transactions.length)return;ask("Clear transaction history?","This only clears the ledger. Player balances will not change.",()=>{state.transactions=[];save();});});
-  $("resetGame").addEventListener("click",()=>ask("Reset all account records?","All player accounts and transaction history will be reset.",()=>{state={bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[{id:"MB-DEMO01",type:"account",amount:500000,description:"Demo starting balance",player:"Mia Marie James",other:"",at:new Date().toISOString()}]};save();}));
+  $("clearHistory").addEventListener("click",()=>{if(!state.transactions.length)return;ask("Clear transaction history?","This only clears the ledger. Account balances will not change.",()=>{state.transactions=[];save();});});
+  $("resetGame").addEventListener("click",()=>ask("Reset all account records?","All customer accounts and transaction history will be reset.",()=>{state={bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[{id:"MB-DEMO01",type:"account",amount:500000,description:"Demo starting balance",player:"Mia Marie James",other:"",at:new Date().toISOString()}]};save();}));
   $("exportBtn").addEventListener("click",()=>{
     const blob=new Blob([JSON.stringify({app:"Monopoly Bank Account Portal",exportedAt:new Date().toISOString(),...state},null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="monopoly-bank-backup.json";a.click();URL.revokeObjectURL(url);
