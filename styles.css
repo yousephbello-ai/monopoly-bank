@@ -26,3 +26,34 @@ dialog{border:1px solid #49325d;border-radius:20px;padding:0;width:min(420px,cal
 .login-copy{font-size:13px;color:#a69bb8;line-height:1.6;margin:0 0 22px}
 .login-foot{font-size:10px;color:#9584a5;text-align:center;margin:20px 0 0}
 @media(max-width:480px){.login-card{padding:26px 22px}}
+
+/* Private single-account presentation */
+.players-panel,.admin-strip{display:none!important}
+.private-balance{grid-template-columns:minmax(0,420px);margin-top:28px}
+.private-balance .stat-card{background:linear-gradient(145deg,#39204f,#21152f);padding:28px}
+.private-balance .stat-card strong{font-size:clamp(30px,5vw,42px);letter-spacing:-1.5px}
+#fromLabel,#txFrom,#toGroup{display:none!important}
+.top-actions{gap:10px;flex-wrap:wrap}
+body.light-mode{background:#f3f1f8;color:#211a2b}
+body.light-mode .topbar{background:#fff;color:#211a2b;border-bottom:1px solid #e5deed}
+body.light-mode .brand{color:#211a2b}
+body.light-mode .brand b{color:#7441a5}
+body.light-mode .mode-pill{color:#765b8d}
+body.light-mode .shell{color:#211a2b}
+body.light-mode .muted{color:#746b7d}
+body.light-mode .stat-card,body.light-mode .panel{background:#fff;border:1px solid #e7e0ed;box-shadow:0 12px 32px #35234a12}
+body.light-mode .stat-card strong,body.light-mode .panel-heading h2,body.light-mode .action-panel h2{color:#211a2b}
+body.light-mode .stat-label,body.light-mode label{color:#64566f}
+body.light-mode input,body.light-mode select,body.light-mode .amount-wrap{background:#faf9fc;color:#211a2b;border-color:#d9cfe3}
+body.light-mode input::placeholder{color:#988da1}
+body.light-mode .button-quiet{color:#68418a}
+body.light-mode td{color:#30263a;border-bottom-color:#eee8f2}
+body.light-mode th{color:#715b80;border-bottom-color:#e8e0ee}
+body.light-mode .empty-state,body.light-mode .empty-history{color:#746b7d}
+body.light-mode .login-screen{background:radial-gradient(ellipse at 50% 0%,#e8d9f5 0,#f3eff8 65%,#fff 100%)}
+body.light-mode .login-card{background:#fff;border-color:#e7deef}
+body.light-mode .login-card h1{color:#211a2b}
+body.light-mode .login-copy,body.light-mode .login-foot{color:#746b7d}
+body.light-mode dialog{background:#fff;color:#211a2b;border-color:#e1d6eb}
+body.light-mode .dialog-card h2{color:#211a2b}
+body.light-mode .icon-button{background:#f4eff8;color:#5d3d78;border-color:#e6dcec}
