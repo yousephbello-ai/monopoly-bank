@@ -1,6 +1,8 @@
 (() => {
   "use strict";
   const KEY = "monopoly-bank-state-v1";
+  const AUTH_KEY = "monopoly-bank-demo-auth";
+  const THEME_KEY = "monopoly-bank-theme";
   const STARTING_BANK = 120000000;
   const SHARED_LOGIN_ID = "482731905614";
   const SHARED_LOGIN_PIN = "071999";
@@ -8,11 +10,20 @@
   const $ = (id) => document.getElementById(id);
   const money = (amount) => "$" + Number(amount || 0).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
   const safeText = (value) => String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const readStorage = (storage, key) => { try { return storage.getItem(key); } catch (_) { return null; } };
+  const writeStorage = (storage, key, value) => { try { storage.setItem(key, value); } catch (_) {} };
+  const removeStorage = (storage, key) => { try { storage.removeItem(key); } catch (_) {} };
   let state = load();
   let confirmAction = null;
 
   const loginForm = $("loginForm");
-  function signIn() {
+  function showDashboard() {
+    $("loginScreen").classList.add("hidden");
+    $("appShell").classList.remove("app-locked");
+    render();
+  }
+  function signIn(event) {
+    if (event) event.preventDefault();
     const accountId = $("loginId").value.replace(/\s/g, "");
     const pin = $("loginPin").value.trim();
     const error = $("loginError");
@@ -24,24 +35,19 @@
       error.textContent = "The account ID or PIN is incorrect.";
       return;
     }
-    try { sessionStorage.setItem("monopoly-bank-demo-auth", "signed-in"); } catch (_) {}
+    writeStorage(sessionStorage, AUTH_KEY, "signed-in");
     error.textContent = "";
-    $("loginScreen").classList.add("hidden");
-    $("appShell").classList.remove("app-locked");
-    render();
+    showDashboard();
   }
   $("loginButton").addEventListener("click", signIn);
-  loginForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    signIn();
-  });
+  loginForm.addEventListener("submit", signIn);
   $("logoutBtn").addEventListener("click", () => {
-    sessionStorage.removeItem("monopoly-bank-demo-auth");
+    removeStorage(sessionStorage, AUTH_KEY);
     $("appShell").classList.add("app-locked");
     $("loginScreen").classList.remove("hidden");
     $("loginPin").value = "";
   });
-  if (sessionStorage.getItem("monopoly-bank-demo-auth") === "signed-in") {
+  if (readStorage(sessionStorage, AUTH_KEY) === "signed-in") {
     $("loginScreen").classList.add("hidden");
     $("appShell").classList.remove("app-locked");
   }
@@ -141,8 +147,9 @@
     const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="monopoly-bank-backup.json";a.click();URL.revokeObjectURL(url);
   });
   const themeButton = $("themeBtn");
-  const savedTheme = localStorage.getItem("monopoly-bank-theme");
-  if (savedTheme === "light") document.body.classList.add("light-mode");
+  const savedTheme = readStorage(localStorage, THEME_KEY);
+  // Use light mode for first-time visitors; remember an explicit dark-mode choice.
+  if (savedTheme !== "dark") document.body.classList.add("light-mode");
   function updateThemeButton() {
     const light = document.body.classList.contains("light-mode");
     themeButton.textContent = light ? "☾ Dark mode" : "☀ Light mode";
@@ -150,7 +157,7 @@
   }
   themeButton.addEventListener("click", () => {
     document.body.classList.toggle("light-mode");
-    localStorage.setItem("monopoly-bank-theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+    writeStorage(localStorage, THEME_KEY, document.body.classList.contains("light-mode") ? "light" : "dark");
     updateThemeButton();
   });
   updateThemeButton();
