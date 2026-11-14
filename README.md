@@ -1,28 +1,23 @@
 # Monopoly Bank
 
-A fictional account-management portal for a Monopoly-style activity. It is a demonstration project, not a real financial institution.
+A browser-based account-management portal with a personal dashboard, account balance overview, transaction recording, and account activity history.
 
-## Demonstration access
+## Features
 
-- Shared account ID: `482731905614`
-- Shared six-digit PIN: `071999`
-- All demonstration accounts use the same login credentials.
+- Login-first account portal.
+- Personal account dashboard.
+- Account balance overview.
+- Deposits and withdrawals.
+- Recent transaction history.
+- Light and dark appearance modes.
+- Exportable account data.
 
-## Current features
+## Technical notes
 
-- Login-first demonstration screen.
-- Customer account directory and account balances.
-- Bank payments, payments to the bank, and transfers between accounts.
-- Transaction ledger and JSON data export.
-- Add and close customer accounts.
-- Browser-based data storage.
-
-## Important limitations
-
-- This is a front-end-only demonstration. The shared ID and PIN are present in public JavaScript and are not secret.
-- The login screen is a convenience gate, not real security. Anyone who can inspect the public source can discover the credentials.
-- Account data is stored in the browser on one device and does not synchronize between devices.
-- Do not enter real banking credentials or real financial information.
+- Built with HTML, CSS, and JavaScript.
+- Account information is stored in the browser using local storage.
+- Login credentials are checked in front-end JavaScript and are visible in the public source code. This is not suitable for protecting real financial accounts.
+- A secure production service requires server-side authentication and protected data storage.
 
 ## Run
 
