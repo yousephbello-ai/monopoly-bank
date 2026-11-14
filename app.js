@@ -21,6 +21,7 @@
       $("loginError").textContent = "";
       $("loginScreen").classList.add("hidden");
       $("appShell").classList.remove("app-locked");
+      render();
     } else {
       $("loginError").textContent = "The account ID or PIN is incorrect.";
     }
@@ -69,14 +70,15 @@
       </div>`).join("");
     $("emptyPlayers").classList.toggle("hidden",state.players.length>0);
     $("playersList").classList.toggle("hidden",state.players.length===0);
-    const opts = state.players.map(p=>`<option value="${p.id}">${safeText(p.name)} — ${money(p.balance)}</option>`).join("");
-    $("txFrom").innerHTML = opts || '<option value="">Add a customer account first</option>';
-    $("txTo").innerHTML = opts || '<option value="">Add a customer account first</option>';
-    const rows = state.transactions.slice(0,20);
+    const opts = signedInAccount ? `<option value="${signedInAccount.id}">${safeText(signedInAccount.name)}</option>` : '<option value="">Account unavailable</option>';
+    $("txFrom").innerHTML = opts;
+    $("txTo").innerHTML = opts;
+    if (signedInAccount) $("txFrom").value = signedInAccount.id;
+    const rows = state.transactions.filter(t => t.player === "Mia Marie James" || t.other === "Mia Marie James").slice(0,20);
     $("historyBody").innerHTML = rows.map(t=>{
-      const positive = t.type === "deposit" || t.type === "transfer-in";
-      const label = ({deposit:"Bank payment",withdraw:"Paid to bank",transfer:"Account transfer", "transfer-in":"Transfer received", "account":"Account opened"})[t.type] || t.type;
-      return `<tr><td class="tx-type">${label}<br><span class="tx-date">${safeText(t.description || "")}</span></td><td>${safeText(t.player)}${t.other ? " → "+safeText(t.other) : ""}</td><td class="${positive?"positive":"negative"}">${positive?"+":"−"}${money(t.amount)}</td><td class="tx-date">${new Date(t.at).toLocaleString()}</td></tr>`;
+      const positive = t.type === "deposit" || t.type === "transfer-in" || t.type === "account";
+      const label = ({deposit:"Deposit",withdraw:"Withdrawal",transfer:"Account transfer", "transfer-in":"Transfer received", "account":"Account opened"})[t.type] || t.type;
+      return `<tr><td class="tx-type">${label}<span class="tx-date">${safeText(t.description || "")}</span></td><td class="${positive?"positive":"negative"}">${positive?"+":"−"}${money(t.amount)}</td><td class="tx-date">${new Date(t.at).toLocaleString()}</td></tr>`;
     }).join("");
     $("emptyHistory").classList.toggle("hidden",rows.length>0);
   }
