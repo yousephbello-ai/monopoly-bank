@@ -13,19 +13,13 @@
   <div id="appShell" class="app-locked">
   <header class="topbar">
     <a class="brand" href="#" aria-label="Monopoly Bank home"><span class="brand-mark">M</span><span>MONOPOLY <b>BANK</b></span></a>
-    <div class="top-actions"><span class="mode-pill"><i></i> ACCOUNT PORTAL</span><button id="logoutBtn" class="button button-quiet">Sign out</button><button id="exportBtn" class="button button-quiet">Export data</button></div>
+    <div class="top-actions"><span class="mode-pill"><i></i> ACCOUNT PORTAL</span><button id="themeBtn" class="button button-quiet" type="button" aria-label="Switch to light mode">☀ Light mode</button><button id="logoutBtn" class="button button-quiet">Sign out</button><button id="exportBtn" class="button button-quiet">Export data</button></div>
   </header>
   <main class="shell">
     <section class="welcome">
-      <div><p class="eyebrow">ACCOUNT OVERVIEW</p><h1>Bank dashboard</h1><p class="muted">Manage accounts, balances and recorded transactions.</p></div>
-      <button id="newPlayerTop" class="button button-primary">＋ Add account</button>
+      <div><p class="eyebrow">ACCOUNT OVERVIEW</p><h1>My account</h1><p class="muted">View your balance and manage your account activity.</p></div>
     </section>
-    <section class="stats-grid" aria-label="Account totals">
-      <article class="stat-card"><span class="stat-label">Total bank funds</span><strong id="bankTotal">$0.00</strong><small>Available in the bank</small></article>
-      <article class="stat-card"><span class="stat-label">Customer accounts</span><strong id="playerCount">0</strong><small>Active accounts</small></article>
-      <article class="stat-card"><span class="stat-label">Customer balances</span><strong id="playerTotal">$0.00</strong><small>Combined customer balances</small></article>
-      <article class="stat-card"><span class="stat-label">Transactions</span><strong id="transactionCount">0</strong><small>Recorded transactions</small></article>
-    </section>
+    <section class="stats-grid private-balance" aria-label="Your account balance"><article class="stat-card"><span class="stat-label">Available balance</span><strong id="accountBalance">$500,000.00</strong><small>Your account balance</small></article></section>
     <section class="content-grid">
       <div class="panel players-panel">
         <div class="panel-heading"><div><p class="eyebrow">ACCOUNT DIRECTORY</p><h2>Customer accounts</h2></div><button id="newPlayer" class="button button-outline">＋ Add account</button></div>
@@ -36,7 +30,7 @@
         <p class="eyebrow">BANK OPERATIONS</p><h2>Make a transaction</h2>
         <form id="transactionForm">
           <label for="txType">Transaction type</label>
-          <select id="txType"><option value="deposit">Bank payment</option><option value="withdraw">Payment to bank</option><option value="transfer">Account transfer</option></select>
+          <select id="txType"><option value="deposit">Add funds</option><option value="withdraw">Withdraw funds</option></select>
           <label for="txFrom" id="fromLabel">Customer account</label><select id="txFrom" required></select>
           <div id="toGroup" class="hidden"><label for="txTo">Recipient account</label><select id="txTo"></select></div>
           <label for="txAmount">Amount</label><div class="amount-wrap"><span>$</span><input id="txAmount" type="number" min="1" step="1" placeholder="e.g. 200" required></div>
