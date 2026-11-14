@@ -17,7 +17,7 @@
     const accountId = $("loginId").value.replace(/\s/g, "");
     const pin = $("loginPin").value.trim();
     if (accountId === SHARED_LOGIN_ID && pin === SHARED_LOGIN_PIN) {
-      sessionStorage.setItem("monopoly-bank-demo-auth", "signed-in");
+      sessionStorage.setItem("monopoly-bank-auth", "signed-in");
       $("loginError").textContent = "";
       $("loginScreen").classList.add("hidden");
       $("appShell").classList.remove("app-locked");
@@ -27,12 +27,12 @@
     }
   });
   $("logoutBtn").addEventListener("click", () => {
-    sessionStorage.removeItem("monopoly-bank-demo-auth");
+    sessionStorage.removeItem("monopoly-bank-auth");
     $("appShell").classList.add("app-locked");
     $("loginScreen").classList.remove("hidden");
     $("loginPin").value = "";
   });
-  if (sessionStorage.getItem("monopoly-bank-demo-auth") === "signed-in") {
+  if (sessionStorage.getItem("monopoly-bank-auth") === "signed-in") {
     $("loginScreen").classList.add("hidden");
     $("appShell").classList.remove("app-locked");
   }
@@ -41,15 +41,16 @@
     try {
       const saved = JSON.parse(localStorage.getItem(KEY));
       if (saved && Array.isArray(saved.players) && Array.isArray(saved.transactions) && Number.isFinite(saved.bank)) {
+        saved.transactions = saved.transactions.map(t => ({...t, id: t.id === "MB-DEMO01" ? "MB-OPEN001" : t.id, description: t.description === "Demo starting balance" ? "Opening balance" : t.description}));
         if (!saved.players.some(p => p.name.toLowerCase() === "mia marie james")) {
           saved.players.push({id:"MB-MIA001",name:"Mia Marie James",balance:500000});
           if (saved.bank >= 500000) saved.bank -= 500000;
-          saved.transactions.unshift({id:"MB-DEMO01",type:"account",amount:500000,description:"Demo starting balance",player:"Mia Marie James",other:"",at:new Date().toISOString()});
+          saved.transactions.unshift({id:"MB-OPEN001",type:"account",amount:500000,description:"Opening balance",player:"Mia Marie James",other:"",at:new Date().toISOString()});
         }
         return saved;
       }
     } catch (_) {}
-    return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[{id:"MB-DEMO01",type:"account",amount:500000,description:"Demo starting balance",player:"Mia Marie James",other:"",at:new Date().toISOString()}]};
+    return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[{id:"MB-OPEN001",type:"account",amount:500000,description:"Opening balance",player:"Mia Marie James",other:"",at:new Date().toISOString()}]};
   }
   function save() { localStorage.setItem(KEY, JSON.stringify(state)); render(); }
   function id() { return "MB-" + Math.random().toString(36).slice(2,8).toUpperCase(); }
@@ -127,7 +128,7 @@
   function ask(title,description,action){$("confirmTitle").textContent=title;$("confirmText").textContent=description;confirmAction=action;$("confirmDialog").showModal();}
   $("confirmYes").addEventListener("click",e=>{e.preventDefault();$("confirmDialog").close();if(confirmAction)confirmAction();confirmAction=null;});
   $("clearHistory").addEventListener("click",()=>{if(!state.transactions.length)return;ask("Clear transaction history?","This only clears the ledger. Account balances will not change.",()=>{state.transactions=[];save();});});
-  $("resetGame").addEventListener("click",()=>ask("Reset all account records?","All customer accounts and transaction history will be reset.",()=>{state={bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[{id:"MB-DEMO01",type:"account",amount:500000,description:"Demo starting balance",player:"Mia Marie James",other:"",at:new Date().toISOString()}]};save();}));
+  $("resetGame").addEventListener("click",()=>ask("Reset all account records?","All customer accounts and transaction history will be reset.",()=>{state={bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[{id:"MB-OPEN001",type:"account",amount:500000,description:"Opening balance",player:"Mia Marie James",other:"",at:new Date().toISOString()}]};save();}));
   $("exportBtn").addEventListener("click",()=>{
     const blob=new Blob([JSON.stringify({app:"Monopoly Bank Account Portal",exportedAt:new Date().toISOString(),...state},null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="monopoly-bank-backup.json";a.click();URL.revokeObjectURL(url);
