@@ -1,9 +1,9 @@
 (() => {
   "use strict";
   const KEY = "monopoly-bank-state-v1";
-  const STARTING_BANK = 120000;
+  const STARTING_BANK = 120000000;
   const $ = (id) => document.getElementById(id);
-  const money = (amount) => "₦" + Number(amount || 0).toLocaleString("en-NG", {maximumFractionDigits:0});
+  const money = (amount) => "$" + Number(amount || 0).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
   const safeText = (value) => String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   let state = load();
   let confirmAction = null;
@@ -11,9 +11,16 @@
   function load() {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY));
-      if (saved && Array.isArray(saved.players) && Array.isArray(saved.transactions) && Number.isFinite(saved.bank)) return saved;
+      if (saved && Array.isArray(saved.players) && Array.isArray(saved.transactions) && Number.isFinite(saved.bank)) {
+        if (!saved.players.some(p => p.name.toLowerCase() === "mia marie james")) {
+          saved.players.push({id:"MB-MIA001",name:"Mia Marie James",balance:500000});
+          if (saved.bank >= 500000) saved.bank -= 500000;
+          saved.transactions.unshift({id:"MB-DEMO01",type:"account",amount:500000,description:"Demo starting balance",player:"Mia Marie James",other:"",at:new Date().toISOString()});
+        }
+        return saved;
+      }
     } catch (_) {}
-    return {bank:STARTING_BANK,players:[],transactions:[]};
+    return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[{id:"MB-DEMO01",type:"account",amount:500000,description:"Demo starting balance",player:"Mia Marie James",other:"",at:new Date().toISOString()}]};
   }
   function save() { localStorage.setItem(KEY, JSON.stringify(state)); render(); }
   function id() { return "MB-" + Math.random().toString(36).slice(2,8).toUpperCase(); }
@@ -47,7 +54,7 @@
     }).join("");
     $("emptyHistory").classList.toggle("hidden",rows.length>0);
   }
-  function openPlayerDialog() { $("playerError").textContent=""; $("playerName").value=""; $("startingBalance").value="1500"; $("playerDialog").showModal(); $("playerName").focus(); }
+  function openPlayerDialog() { $("playerError").textContent=""; $("playerName").value=""; $("startingBalance").value="500000"; $("playerDialog").showModal(); $("playerName").focus(); }
   ["newPlayer","newPlayerTop","emptyAdd"].forEach(id=>$ (id).addEventListener("click",openPlayerDialog));
   $("closePlayer").addEventListener("click",()=>$("playerDialog").close());
   $("playerForm").addEventListener("submit",e=>{
@@ -92,7 +99,7 @@
   function ask(title,description,action){$("confirmTitle").textContent=title;$("confirmText").textContent=description;confirmAction=action;$("confirmDialog").showModal();}
   $("confirmYes").addEventListener("click",e=>{e.preventDefault();$("confirmDialog").close();if(confirmAction)confirmAction();confirmAction=null;});
   $("clearHistory").addEventListener("click",()=>{if(!state.transactions.length)return;ask("Clear transaction history?","This only clears the ledger. Player balances will not change.",()=>{state.transactions=[];save();});});
-  $("resetGame").addEventListener("click",()=>ask("Reset the whole game?","All player accounts and transaction history will be deleted. The bank will return to its starting balance.",()=>{state={bank:STARTING_BANK,players:[],transactions:[]};save();}));
+  $("resetGame").addEventListener("click",()=>ask("Reset the whole game?","All player accounts and transaction history will be deleted. The bank will return to its starting balance.",()=>{state={bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[{id:"MB-DEMO01",type:"account",amount:500000,description:"Demo starting balance",player:"Mia Marie James",other:"",at:new Date().toISOString()}]};save();}));
   $("exportBtn").addEventListener("click",()=>{
     const blob=new Blob([JSON.stringify({app:"Monopoly Bank",exportedAt:new Date().toISOString(),...state},null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="monopoly-bank-backup.json";a.click();URL.revokeObjectURL(url);
