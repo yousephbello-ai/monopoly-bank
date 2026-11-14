@@ -4,69 +4,100 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#171020">
-  <meta name="description" content="Monopoly Bank account management portal.">
+  <meta name="description" content="Monopoly Bank account portal.">
   <title>Monopoly Bank</title>
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
   <section id="loginScreen" class="login-screen">
     <button id="loginThemeBtn" class="button button-quiet login-theme-button" type="button" aria-label="Switch to dark mode">☾ Dark mode</button>
     <form id="loginForm" class="login-card">
       <div class="login-mark">M</div>
-      <p class="eyebrow">SECURE ACCOUNT ACCESS</p>
+      <p class="eyebrow">MONOPOLY BANK</p>
       <h1>Welcome back</h1>
-      <p class="login-copy">Sign in with your account ID and six-digit PIN.</p>
-      <label for="loginId">12-digit account ID</label>
-      <input id="loginId" inputmode="numeric" autocomplete="username" maxlength="12" pattern="[0-9]{12}" placeholder="Enter account ID" required>
-      <label for="loginPin">6-digit PIN</label>
-      <input id="loginPin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6" pattern="[0-9]{6}" placeholder="Enter PIN" required>
-      <p class="login-hint">Demo account: 482731905614 · PIN: 071999</p>
+      <p class="login-copy">Sign in to securely view your account dashboard.</p>
+      <label for="loginId">Account ID</label>
+      <input id="loginId" inputmode="numeric" autocomplete="username" maxlength="12" pattern="[0-9]{12}" placeholder="Enter your 12-digit ID" required>
+      <label for="loginPin">PIN</label>
+      <input id="loginPin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6" pattern="[0-9]{6}" placeholder="Enter your 6-digit PIN" required>
       <p id="loginError" class="form-message" role="alert"></p>
       <button id="loginButton" class="button button-primary button-full" type="submit">Sign in</button>
-      <p class="login-foot">Monopoly Bank · Secure demo portal</p>
+      <p class="login-foot">Monopoly Bank · Account portal</p>
     </form>
   </section>
+
   <div id="appShell" class="app-locked">
-  <header class="topbar">
-    <a class="brand" href="#" aria-label="Monopoly Bank home"><span class="brand-mark">M</span><span>MONOPOLY <b>BANK</b></span></a>
-    <div class="top-actions"><span class="mode-pill"><i></i> ACCOUNT PORTAL</span><button id="themeBtn" class="button button-quiet" type="button" aria-label="Switch to dark mode">☾ Dark mode</button><button id="logoutBtn" class="button button-quiet">Sign out</button><button id="exportBtn" class="button button-quiet">Export data</button></div>
-  </header>
-  <main class="shell">
-    <section class="welcome">
-      <div><p class="eyebrow">ACCOUNT OVERVIEW</p><h1>My account</h1><p class="muted">View your balance and manage your account activity.</p></div>
-    </section>
-    <section class="stats-grid private-balance" aria-label="Your account balance"><article class="stat-card"><span class="stat-label">Available balance</span><strong id="accountBalance">$500,000.00</strong><small>Your account balance</small></article></section>
-    <section class="content-grid">
-      <div class="panel players-panel">
-        <div class="panel-heading"><div><p class="eyebrow">ACCOUNT DIRECTORY</p><h2>Customer accounts</h2></div><button id="newPlayer" class="button button-outline">＋ Add account</button></div>
-        <div id="playersList" class="players-list"></div>
-        <div id="emptyPlayers" class="empty-state"><div class="empty-icon">M</div><h3>No customer accounts yet</h3><p>Create a customer account to get started.</p><button id="emptyAdd" class="button button-primary">Create first account</button></div>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Monopoly Bank home"><span class="brand-mark">M</span><span>MONOPOLY <b>BANK</b></span></a>
+      <div class="top-actions">
+        <span class="mode-pill"><i></i> ACCOUNT PORTAL</span>
+        <button id="themeBtn" class="button button-quiet" type="button">☾ Dark mode</button>
+        <button id="exportBtn" class="button button-quiet" type="button">Export</button>
+        <button id="logoutBtn" class="button button-quiet" type="button">Sign out</button>
       </div>
-      <aside class="panel action-panel">
-        <p class="eyebrow">BANK OPERATIONS</p><h2>Make a transaction</h2>
-        <form id="transactionForm">
-          <label for="txType">Transaction type</label>
-          <select id="txType"><option value="deposit">Add funds</option><option value="withdraw">Withdraw funds</option></select>
-          <label for="txFrom" id="fromLabel">Customer account</label><select id="txFrom" required></select>
-          <div id="toGroup" class="hidden"><label for="txTo">Recipient account</label><select id="txTo"></select></div>
-          <label for="txAmount">Amount</label><div class="amount-wrap"><span>$</span><input id="txAmount" type="number" min="1" step="1" placeholder="e.g. 200" required></div>
-          <label for="txNote">Note <span class="optional">(optional)</span></label><input id="txNote" type="text" maxlength="80" placeholder="Rent, salary, tax…">
-          <button class="button button-primary button-full" type="submit">Confirm transaction</button>
-          <p id="formMessage" class="form-message" role="status"></p>
-        </form>
-      </aside>
-    </section>
-    <section class="panel history-panel">
-      <div class="panel-heading"><div><p class="eyebrow">ACCOUNT LEDGER</p><h2>Recent transactions</h2></div><button id="clearHistory" class="button button-quiet">Clear history</button></div>
-      <div class="table-scroll"><table><thead><tr><th>Activity</th><th>Customer account</th><th>Amount</th><th>Date &amp; time</th></tr></thead><tbody id="historyBody"></tbody></table></div>
-      <div id="emptyHistory" class="empty-history">Transactions will appear here as account activity is recorded.</div>
-    </section>
-    <section class="admin-strip"><div><p class="eyebrow">ADMINISTRATION</p><h2>Administration controls</h2><p class="muted">Manage the account records and system settings.</p></div><button id="resetGame" class="button button-danger">Reset system</button></section>
-    <footer><p>Monopoly Bank · Account management</p><p>Demonstration interface. Not a licensed financial institution.</p></footer>
-  </main>
-  <dialog id="playerDialog"><form id="playerForm" method="dialog" class="dialog-card"><button type="button" class="dialog-close" id="closePlayer" aria-label="Close">×</button><p class="eyebrow">NEW ACCOUNT</p><h2>Add customer account</h2><label for="playerName">Customer name</label><input id="playerName" required maxlength="60"><label for="startingBalance">Starting balance</label><input id="startingBalance" type="number" min="0" step="1" required><p id="playerError" class="form-message" role="alert"></p><button class="button button-primary button-full" type="submit">Create account</button></form></dialog>
-  <dialog id="confirmDialog"><form method="dialog" class="dialog-card"><p class="eyebrow">PLEASE CONFIRM</p><h2 id="confirmTitle">Are you sure?</h2><p id="confirmText" class="muted"></p><div class="dialog-actions"><button class="button button-quiet" value="cancel">Cancel</button><button id="confirmYes" class="button button-danger" value="confirm">Confirm</button></div></form></dialog>
+    </header>
+
+    <main class="shell dashboard-shell">
+      <section class="dashboard-welcome">
+        <div>
+          <p class="eyebrow">PERSONAL DASHBOARD</p>
+          <h1>Good to see you, Mia.</h1>
+          <p class="muted">Here’s your account overview and recent activity.</p>
+        </div>
+        <div class="account-chip"><span class="account-avatar">M</span><span><strong>Mia Marie James</strong><small>Account holder</small></span></div>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="balance-card">
+          <div class="balance-top"><span>AVAILABLE BALANCE</span><span class="balance-status"><i></i> Account active</span></div>
+          <div id="accountBalance" class="balance-amount">$500,000.00</div>
+          <div class="balance-bottom"><span>MONOPOLY BANK</span><span>ACCOUNT •••• 5614</span></div>
+          <div class="balance-decoration"></div>
+        </article>
+        <aside class="panel account-details">
+          <p class="eyebrow">ACCOUNT DETAILS</p>
+          <div class="detail-line"><span>Account name</span><strong>Mia Marie James</strong></div>
+          <div class="detail-line"><span>Account ID</span><strong>482731905614</strong></div>
+          <div class="detail-line"><span>Account type</span><strong>Personal</strong></div>
+          <div class="detail-line"><span>Status</span><strong class="active-text">Active</strong></div>
+        </aside>
+      </section>
+
+      <section class="dashboard-lower">
+        <section class="panel transfer-panel">
+          <div class="section-heading"><div><p class="eyebrow">ACCOUNT ACTIVITY</p><h2>Make a transaction</h2><p class="muted">Record a deposit or withdrawal.</p></div><span class="section-icon">↗</span></div>
+          <form id="transactionForm" class="transaction-form">
+            <label for="txType">Transaction type</label>
+            <select id="txType"><option value="deposit">Deposit funds</option><option value="withdraw">Withdraw funds</option></select>
+            <label for="txAmount">Amount</label>
+            <div class="amount-wrap"><span>$</span><input id="txAmount" type="number" min="1" step="1" placeholder="0.00" required></div>
+            <label for="txNote">Description <span class="optional">(optional)</span></label>
+            <input id="txNote" type="text" maxlength="80" placeholder="What is this transaction for?">
+            <label for="txFrom" id="fromLabel" class="legacy-hidden">Account</label><select id="txFrom" class="legacy-hidden" aria-hidden="true" tabindex="-1"></select>
+            <div id="toGroup" class="hidden"><label for="txTo">Recipient account</label><select id="txTo"></select></div>
+            <button class="button button-primary button-full" type="submit">Confirm transaction <span>→</span></button>
+            <p id="formMessage" class="form-message" role="status"></p>
+          </form>
+        </section>
+
+        <section class="panel history-panel dashboard-history">
+          <div class="section-heading"><div><p class="eyebrow">YOUR ACCOUNT LEDGER</p><h2>Recent transactions</h2><p class="muted">A record of your latest account activity.</p></div><span class="section-icon">↔</span></div>
+          <div class="table-scroll"><table><thead><tr><th>Activity</th><th>Amount</th><th>Date &amp; time</th></tr></thead><tbody id="historyBody"></tbody></table></div>
+          <div id="emptyHistory" class="empty-history">Your transactions will appear here.</div>
+          <button id="clearHistory" class="legacy-hidden" type="button">Clear history</button>
+        </section>
+      </section>
+
+      <footer class="dashboard-footer"><span>© Monopoly Bank</span><span>Demonstration account portal · Not a licensed financial institution</span></footer>
+      <section class="legacy-hidden" aria-hidden="true">
+        <div class="players-panel"><div id="playersList"></div><div id="emptyPlayers"></div><button id="newPlayer" type="button"></button><button id="emptyAdd" type="button"></button></div>
+        <button id="resetGame" type="button"></button>
+      </section>
+    </main>
+    <dialog id="playerDialog"><form id="playerForm" method="dialog" class="dialog-card"><button type="button" class="dialog-close" id="closePlayer" aria-label="Close">×</button><p class="eyebrow">NEW ACCOUNT</p><h2>Add customer account</h2><label for="playerName">Customer name</label><input id="playerName" required maxlength="60"><label for="startingBalance">Starting balance</label><input id="startingBalance" type="number" min="0" step="1" required><p id="playerError" class="form-message" role="alert"></p><button class="button button-primary button-full" type="submit">Create account</button></form></dialog>
+    <dialog id="confirmDialog"><form method="dialog" class="dialog-card"><p class="eyebrow">PLEASE CONFIRM</p><h2 id="confirmTitle">Are you sure?</h2><p id="confirmText" class="muted"></p><div class="dialog-actions"><button class="button button-quiet" value="cancel">Cancel</button><button id="confirmYes" class="button button-danger" value="confirm">Confirm</button></div></form></dialog>
   </div>
+
   <script>
     (() => {
       const button = document.getElementById('loginThemeBtn');
@@ -91,6 +122,6 @@
       });
     })();
   </script>
-  <script src="app.js?v=2" defer></script>
+  <script src="app.js?v=3" defer></script>
 </body>
 </html>
