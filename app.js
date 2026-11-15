@@ -52,34 +52,18 @@
     $("appShell").classList.remove("app-locked");
   }
 
-  function sampleLedger() {
-    return [
-      {id:"MB-OPEN01",type:"account",amount:500000,description:"Opening deposit · sample record",player:"Mia Marie James",other:"",at:"2026-11-01T09:15:00.000Z"},
-      {id:"MB-TX1001",type:"withdraw",amount:4500,description:"Sample transfer to external account",player:"Mia Marie James",other:"",at:"2026-11-03T11:40:00.000Z"},
-      {id:"MB-TX1002",type:"withdraw",amount:2750,description:"Sample household utility payment",player:"Mia Marie James",other:"",at:"2026-11-06T08:25:00.000Z"},
-      {id:"MB-TX1003",type:"withdraw",amount:1200,description:"Sample mobile and internet payment",player:"Mia Marie James",other:"",at:"2026-11-08T16:10:00.000Z"},
-      {id:"MB-TX1004",type:"withdraw",amount:3482.12,description:"Sample retail card purchase",player:"Mia Marie James",other:"",at:"2026-11-11T13:05:00.000Z"},
-      {id:"MB-TX1005",type:"withdraw",amount:3500,description:"Sample cash withdrawal",player:"Mia Marie James",other:"",at:"2026-11-14T10:30:00.000Z"}
-    ];
-  }
   function load() {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY));
       if (saved && Array.isArray(saved.players) && Array.isArray(saved.transactions) && Number.isFinite(saved.bank)) {
-        let account = saved.players.find(p => p.name.toLowerCase() === "mia marie james");
+        const account = saved.players.find(p => p.name.toLowerCase() === "mia marie james");
         if (!account) {
-          account = {id:"MB-MIA001",name:"Mia Marie James",balance:484567.88};
-          saved.players.push(account);
-        }
-        if (saved.sampleLedgerVersion !== 2) {
-          account.balance = 484567.88;
-          saved.transactions = sampleLedger();
-          saved.sampleLedgerVersion = 2;
+          saved.players.push({id:"MB-MIA001",name:"Mia Marie James",balance:500000});
         }
         return saved;
       }
     } catch (_) {}
-    return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:484567.88}],transactions:sampleLedger(),sampleLedgerVersion:2};
+    return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[]};
   }
   function save() { localStorage.setItem(KEY, JSON.stringify(state)); render(); }
   function id() { return "MB-" + Math.random().toString(36).slice(2,8).toUpperCase(); }
@@ -157,14 +141,13 @@
   function ask(title,description,action){$("confirmTitle").textContent=title;$("confirmText").textContent=description;confirmAction=action;$("confirmDialog").showModal();}
   $("confirmYes").addEventListener("click",e=>{e.preventDefault();$("confirmDialog").close();if(confirmAction)confirmAction();confirmAction=null;});
   $("clearHistory").addEventListener("click",()=>{if(!state.transactions.length)return;ask("Clear transaction history?","This only clears the ledger. Account balances will not change.",()=>{state.transactions=[];save();});});
-  $("resetGame").addEventListener("click",()=>ask("Reset all account records?","All customer accounts and transaction history will be reset.",()=>{state={bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[{id:"MB-DEMO01",type:"account",amount:500000,description:"Demo starting balance",player:"Mia Marie James",other:"",at:new Date().toISOString()}]};save();}));
+  $("resetGame").addEventListener("click",()=>ask("Reset all account records?","All customer accounts and transaction history will be reset.",()=>{state={bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[]};save();}));
   $("exportBtn").addEventListener("click",()=>{
     const blob=new Blob([JSON.stringify({app:"Monopoly Bank Account Portal",exportedAt:new Date().toISOString(),...state},null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="monopoly-bank-backup.json";a.click();URL.revokeObjectURL(url);
   });
   const themeButton = $("themeBtn");
   const savedTheme = readStorage(localStorage, THEME_KEY);
-  // Use light mode for first-time visitors; remember an explicit dark-mode choice.
   if (savedTheme !== "dark") document.body.classList.add("light-mode");
   function updateThemeButton() {
     const light = document.body.classList.contains("light-mode");
