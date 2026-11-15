@@ -104,7 +104,7 @@
     $("txFrom").innerHTML = opts;
     $("txTo").innerHTML = opts;
     if (signedInAccount) $("txFrom").value = signedInAccount.id;
-    const rows = state.transactions.filter(t => t.player === "Mia Marie James" || t.other === "Mia Marie James").slice(0,20);
+    const rows = state.transactions.filter(t => t.player === "Mia Marie James" || t.other === "Mia Marie James").sort((a,b) => new Date(a.at) - new Date(b.at)).slice(0,20);
     $("historyBody").innerHTML = rows.map(t=>{
       const positive = t.type === "deposit" || t.type === "transfer-in" || t.type === "account";
       const label = ({deposit:"Deposit",withdraw:"Withdrawal",transfer:"Account transfer", "transfer-in":"Transfer received", "account":"Account opened"})[t.type] || t.type;
