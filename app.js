@@ -52,18 +52,34 @@
     $("appShell").classList.remove("app-locked");
   }
 
+  function sampleLedger() {
+    return [
+      {id:"MB-OPEN01",type:"account",amount:500000,description:"Initial deposit · sample record",player:"Mia Marie James",other:"",at:"2026-11-01T09:15:00.000Z"},
+      {id:"MB-TX1001",type:"withdraw",amount:4500,description:"Sample transfer to external account",player:"Mia Marie James",other:"",at:"2026-11-03T11:40:00.000Z"},
+      {id:"MB-TX1002",type:"withdraw",amount:2750,description:"Sample household utility payment",player:"Mia Marie James",other:"",at:"2026-11-06T08:25:00.000Z"},
+      {id:"MB-TX1003",type:"withdraw",amount:1200,description:"Sample mobile and internet payment",player:"Mia Marie James",other:"",at:"2026-11-08T16:10:00.000Z"},
+      {id:"MB-TX1004",type:"withdraw",amount:3482.12,description:"Sample retail card purchase",player:"Mia Marie James",other:"",at:"2026-11-11T13:05:00.000Z"},
+      {id:"MB-TX1005",type:"withdraw",amount:3500,description:"Sample cash withdrawal",player:"Mia Marie James",other:"",at:"2026-11-14T10:30:00.000Z"}
+    ];
+  }
   function load() {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY));
       if (saved && Array.isArray(saved.players) && Array.isArray(saved.transactions) && Number.isFinite(saved.bank)) {
-        const account = saved.players.find(p => p.name.toLowerCase() === "mia marie james");
+        let account = saved.players.find(p => p.name.toLowerCase() === "mia marie james");
         if (!account) {
-          saved.players.push({id:"MB-MIA001",name:"Mia Marie James",balance:500000});
+          account = {id:"MB-MIA001",name:"Mia Marie James",balance:484567.88};
+          saved.players.push(account);
+        }
+        if (saved.sampleLedgerVersion !== 3) {
+          account.balance = 484567.88;
+          saved.transactions = sampleLedger();
+          saved.sampleLedgerVersion = 3;
         }
         return saved;
       }
     } catch (_) {}
-    return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[]};
+    return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:484567.88}],transactions:sampleLedger(),sampleLedgerVersion:3};
   }
   function save() { localStorage.setItem(KEY, JSON.stringify(state)); render(); }
   function id() { return "MB-" + Math.random().toString(36).slice(2,8).toUpperCase(); }
@@ -109,7 +125,7 @@
     const player={id:id(),name,balance};
     state.players.push(player);state.bank-=balance;log("account",balance,"Starting balance",name);$("playerDialog").close();save();
   });
-  function updateTransactionMode(){const transfer=$("txType").value==="transfer";$("toGroup").classList.toggle("hidden",!transfer);$("fromLabel").textContent=transfer?"From account": "Customer account";}
+  function updateTransactionMode(){const transfer=$("txType").value==="transfer";$("toGroup").classList.toggle("hidden",!transfer);$("pinGroup").classList.toggle("hidden",!transfer);$("fromLabel").textContent=transfer?"From account": "Customer account";$("transferPin").required=transfer;$("recipientName").required=transfer;}
   $("txType").addEventListener("change",updateTransactionMode);
   $("transactionForm").addEventListener("submit",e=>{
     e.preventDefault();const type=$("txType").value,from=playerById($("txFrom").value),amount=Number($("txAmount").value),note=$("txNote").value.trim();
@@ -123,12 +139,13 @@
       if(amount>from.balance){msg.textContent="This account does not have enough funds.";return;}
       from.balance-=amount;state.bank+=amount;log("withdraw",amount,note||"Paid to bank",from.name);
     }else{
-      const to=playerById($("txTo").value);
-      if(!to||to.id===from.id){msg.textContent="Choose a different account to receive the transfer.";return;}
+      const recipient=$("recipientName").value.trim();
+      if($("transferPin").value !== "1999"){msg.textContent="Incorrect transaction PIN. Transfer cancelled.";return;}
+      if(!recipient){msg.textContent="Enter the recipient name or account reference.";return;}
       if(amount>from.balance){msg.textContent="This account does not have enough funds.";return;}
-      from.balance-=amount;to.balance+=amount;log("transfer",amount,note||"Account transfer",from.name,to.name);log("transfer-in",amount,note||"Account transfer",to.name,from.name);
+      from.balance-=amount;log("transfer",amount,note||"Transfer to "+recipient,from.name,recipient);
     }
-    $("txAmount").value="";$("txNote").value="";save();msg.textContent="Transaction recorded successfully.";
+    $("txAmount").value="";$("txNote").value="";$("transferPin").value="";$("recipientName").value="";save();msg.textContent="Transaction recorded successfully.";
   });
   $("playersList").addEventListener("click",e=>{
     const btn=e.target.closest("button[data-action]");if(!btn)return;
