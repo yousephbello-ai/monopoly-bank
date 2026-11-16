@@ -71,10 +71,13 @@
           account = {id:"MB-MIA001",name:"Mia Marie James",balance:484567.88};
           saved.players.push(account);
         }
-        if (saved.sampleLedgerVersion !== 3) {
+        const sampleIds = new Set(sampleLedger().map(t => t.id));
+        const hasSampleLedger = sampleLedger().every(sample => saved.transactions.some(t => t.id === sample.id));
+        if (saved.sampleLedgerVersion !== 4 || !hasSampleLedger) {
           account.balance = 484567.88;
-          saved.transactions = sampleLedger();
-          saved.sampleLedgerVersion = 3;
+          const nonSampleEntries = saved.transactions.filter(t => !sampleIds.has(t.id));
+          saved.transactions = [...sampleLedger(), ...nonSampleEntries];
+          saved.sampleLedgerVersion = 4;
         }
         return saved;
       }
@@ -132,6 +135,9 @@
     const msg=$("formMessage");msg.textContent="";
     if(!from){msg.textContent="Create a customer account first.";return;}
     if(!Number.isSafeInteger(amount)||amount<=0){msg.textContent="Enter a whole-number amount greater than zero.";return;}
+    const pin = window.prompt("Enter the 4-digit transaction PIN to continue:");
+    if(pin === null){msg.textContent="Transaction cancelled.";return;}
+    if(pin !== "1999"){msg.textContent="Incorrect PIN. No changes were made.";return;}
     if(type==="deposit"){
       if(amount>state.bank){msg.textContent="The bank does not have enough funds.";return;}
       state.bank-=amount;from.balance+=amount;log("deposit",amount,note||"Bank payment",from.name);
@@ -140,12 +146,11 @@
       from.balance-=amount;state.bank+=amount;log("withdraw",amount,note||"Paid to bank",from.name);
     }else{
       const recipient=$("recipientName").value.trim();
-      if($("transferPin").value !== "1999"){msg.textContent="Incorrect transaction PIN. Transfer cancelled.";return;}
       if(!recipient){msg.textContent="Enter the recipient name or account reference.";return;}
       if(amount>from.balance){msg.textContent="This account does not have enough funds.";return;}
       from.balance-=amount;log("transfer",amount,note||"Transfer to "+recipient,from.name,recipient);
     }
-    $("txAmount").value="";$("txNote").value="";$("transferPin").value="";$("recipientName").value="";save();msg.textContent="Transaction recorded successfully.";
+    $("txAmount").value="";$("txNote").value="";$("recipientName").value="";save();msg.textContent="Sample transaction recorded successfully.";
   });
   $("playersList").addEventListener("click",e=>{
     const btn=e.target.closest("button[data-action]");if(!btn)return;
