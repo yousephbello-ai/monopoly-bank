@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: rows, error: readError } = await supabase
       .from("zeph")
-      .select("payload")
+      .select("id, payload")
       .limit(1);
 
     if (readError) return json({ error: "Could not read account data." }, 500);
@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
       const { error } = await supabase
         .from("zeph")
         .update({ payload: body.state })
-        .not("payload", "is", null);
+        .eq("id", rows[0].id);
       if (error) return json({ error: "Could not save account data." }, 500);
     } else {
       const { error } = await supabase.from("zeph").insert({ payload: body.state });
