@@ -74,7 +74,6 @@
         const sampleIds = new Set(sampleLedger().map(t => t.id));
         const hasSampleLedger = sampleLedger().every(sample => saved.transactions.some(t => t.id === sample.id));
         if (saved.sampleLedgerVersion !== 4 || !hasSampleLedger) {
-          account.balance = 484567.88;
           const nonSampleEntries = saved.transactions.filter(t => !sampleIds.has(t.id));
           saved.transactions = [...sampleLedger(), ...nonSampleEntries];
           saved.sampleLedgerVersion = 4;
@@ -82,7 +81,7 @@
         return saved;
       }
     } catch (_) {}
-    return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:484567.88}],transactions:sampleLedger(),sampleLedgerVersion:3};
+    return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:484567.88}],transactions:sampleLedger(),sampleLedgerVersion:4};
   }
   function save() { localStorage.setItem(KEY, JSON.stringify(state)); render(); }
   function id() { return "MB-" + Math.random().toString(36).slice(2,8).toUpperCase(); }
@@ -130,27 +129,51 @@
   });
   function updateTransactionMode(){const transfer=$("txType").value==="transfer";$("toGroup").classList.toggle("hidden",!transfer);$("fromLabel").textContent=transfer?"From account": "Customer account";$("recipientName").required=transfer;}
   $("txType").addEventListener("change",updateTransactionMode);
-  $("transactionForm").addEventListener("submit",e=>{
-    e.preventDefault();const type=$("txType").value,from=playerById($("txFrom").value),amount=Number($("txAmount").value),note=$("txNote").value.trim();
-    const msg=$("formMessage");msg.textContent="";
-    if(!from){msg.textContent="Create a customer account first.";return;}
-    if(!Number.isSafeInteger(amount)||amount<=0){msg.textContent="Enter a whole-number amount greater than zero.";return;}
-    const pin = window.prompt("Enter the 4-digit transaction PIN to continue:");
-    if(pin === null){msg.textContent="Transaction cancelled.";return;}
-    if(pin !== "1999"){msg.textContent="Incorrect PIN. No changes were made.";return;}
-    if(type==="deposit"){
-      if(amount>state.bank){msg.textContent="The bank does not have enough funds.";return;}
-      state.bank-=amount;from.balance+=amount;log("deposit",amount,note||"Bank payment",from.name);
-    }else if(type==="withdraw"){
-      if(amount>from.balance){msg.textContent="This account does not have enough funds.";return;}
-      from.balance-=amount;state.bank+=amount;log("withdraw",amount,note||"Paid to bank",from.name);
-    }else{
-      const recipient=$("recipientName").value.trim();
-      if(!recipient){msg.textContent="Enter the recipient name or account reference.";return;}
-      if(amount>from.balance){msg.textContent="This account does not have enough funds.";return;}
-      from.balance-=amount;log("transfer",amount,note||"Transfer to "+recipient,from.name,recipient);
+  let pendingTransaction = null;
+  function applyPendingTransaction() {
+    if (!pendingTransaction) return;
+    const {type,fromId,amount,note,recipient} = pendingTransaction;
+    const from = playerById(fromId);
+    const msg = $("formMessage");
+    if (!from) { msg.textContent = "Account unavailable. No changes were made."; pendingTransaction=null; return; }
+    if (type === "deposit") {
+      if (amount > state.bank) { msg.textContent = "The bank does not have enough funds."; pendingTransaction=null; return; }
+      state.bank -= amount; from.balance += amount; log("deposit",amount,note||"Sample deposit",from.name);
+    } else if (type === "withdraw") {
+      if (amount > from.balance) { msg.textContent = "This account does not have enough funds."; pendingTransaction=null; return; }
+      from.balance -= amount; state.bank += amount; log("withdraw",amount,note||"Sample withdrawal",from.name);
+    } else {
+      if (amount > from.balance) { msg.textContent = "This account does not have enough funds."; pendingTransaction=null; return; }
+      from.balance -= amount; log("transfer",amount,note||"Sample transfer to "+recipient,from.name,recipient);
     }
-    $("txAmount").value="";$("txNote").value="";$("recipientName").value="";save();msg.textContent="Sample transaction recorded successfully.";
+    pendingTransaction = null;
+    $("txAmount").value=""; $("txNote").value=""; $("recipientName").value="";
+    $("transactionPin").value="";
+    $("transactionPinDialog").close();
+    save();
+    msg.textContent="Sample transaction recorded successfully.";
+  }
+  $("transactionForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    const type=$("txType").value,from=playerById($("txFrom").value),amount=Number($("txAmount").value),note=$("txNote").value.trim();
+    const msg=$("formMessage");msg.textContent="";
+    if(!from){msg.textContent="Account unavailable.";return;}
+    if(!Number.isSafeInteger(amount)||amount<=0){msg.textContent="Enter a whole-number amount greater than zero.";return;}
+    const recipient=$("recipientName").value.trim();
+    if(type==="transfer"&&!recipient){msg.textContent="Enter the recipient name or account reference.";return;}
+    if(type==="deposit"&&amount>state.bank){msg.textContent="The bank does not have enough funds.";return;}
+    if(type!=="deposit"&&amount>from.balance){msg.textContent="This account does not have enough funds.";return;}
+    pendingTransaction={type,fromId:from.id,amount,note,recipient};
+    $("transactionPin").value="";
+    $("transactionPinError").textContent="";
+    $("transactionPinDialog").showModal();
+    $("transactionPin").focus();
+  });
+  $("cancelTransactionPin").addEventListener("click",()=>{pendingTransaction=null;$("transactionPin").value="";$("transactionPinDialog").close();$("formMessage").textContent="Transaction cancelled.";});
+  $("confirmTransactionPin").addEventListener("click",e=>{
+    e.preventDefault();
+    if($("transactionPin").value!=="1999"){$("transactionPinError").textContent="Incorrect PIN. No changes were made.";return;}
+    applyPendingTransaction();
   });
   $("playersList").addEventListener("click",e=>{
     const btn=e.target.closest("button[data-action]");if(!btn)return;
