@@ -1,58 +1,116 @@
 (() => {
   "use strict";
   const KEY = "monopoly-bank-state-v1";
+  const AUTH_KEY = "monopoly-bank-demo-auth";
+  const THEME_KEY = "monopoly-bank-theme";
   const STARTING_BANK = 120000000;
-  const SHARED_LOGIN_ID = "482731905614";
-  const SHARED_LOGIN_PIN = "071999";
-  const DISPLAY_ACCOUNT_ID = SHARED_LOGIN_ID;
+  const API_URL = "https://jzzfgvokewysinfvjtkx.supabase.co/functions/v1/monopoly-bank";
+  const API_KEY = "sb_publishable_U3RSQ6gP5Fer2TBOV2LOvA_UAK1Lnc3";
+  const DISPLAY_ACCOUNT_ID = "482731905614";
   const $ = (id) => document.getElementById(id);
   const money = (amount) => "$" + Number(amount || 0).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
   const safeText = (value) => String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const readStorage = (storage, key) => { try { return storage.getItem(key); } catch (_) { return null; } };
+  const writeStorage = (storage, key, value) => { try { storage.setItem(key, value); } catch (_) {} };
+  const removeStorage = (storage, key) => { try { storage.removeItem(key); } catch (_) {} };
   let state = load();
   let confirmAction = null;
 
   const loginForm = $("loginForm");
-  loginForm.addEventListener("submit", (event) => {
-    event.preventDefault();
+  function showDashboard() {
+    $("loginScreen").classList.add("hidden");
+    $("appShell").classList.remove("app-locked");
+    render();
+  }
+  async function bankApi(payload) {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": API_KEY },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "The server could not complete the request.");
+    return result;
+  }
+  async function signIn(event) {
+    if (event) event.preventDefault();
     const accountId = $("loginId").value.replace(/\s/g, "");
     const pin = $("loginPin").value.trim();
-    if (accountId === SHARED_LOGIN_ID && pin === SHARED_LOGIN_PIN) {
-      sessionStorage.setItem("monopoly-bank-auth", "signed-in");
-      $("loginError").textContent = "";
-      $("loginScreen").classList.add("hidden");
-      $("appShell").classList.remove("app-locked");
-      render();
-    } else {
-      $("loginError").textContent = "The account ID or PIN is incorrect.";
+    const error = $("loginError");
+    const button = $("loginButton");
+    if (!/^\d{12}$/.test(accountId) || !/^\d{6}$/.test(pin)) {
+      error.textContent = "Enter a 12-digit account ID and a 6-digit PIN.";
+      return;
     }
-  });
+    button.disabled = true;
+    error.textContent = "Checking account…";
+    try {
+      const result = await bankApi({ action: "get", loginId: accountId, loginPin: pin });
+      state = result.state || { bank: STARTING_BANK-500000, players:[{id:"MB-MIA001",name:"Mia Marie James",balance:484567.88}], transactions:sampleLedger(), sampleLedgerVersion:4 };
+      writeStorage(sessionStorage, AUTH_KEY, "signed-in");
+      error.textContent = "";
+      showDashboard();
+    } catch (err) {
+      error.textContent = err.message;
+    } finally {
+      button.disabled = false;
+    }
+  }
+  loginForm.addEventListener("submit", signIn);
   $("logoutBtn").addEventListener("click", () => {
-    sessionStorage.removeItem("monopoly-bank-auth");
+    removeStorage(sessionStorage, AUTH_KEY);
     $("appShell").classList.add("app-locked");
     $("loginScreen").classList.remove("hidden");
     $("loginPin").value = "";
   });
-  if (sessionStorage.getItem("monopoly-bank-auth") === "signed-in") {
-    $("loginScreen").classList.add("hidden");
-    $("appShell").classList.remove("app-locked");
+  if (readStorage(sessionStorage, AUTH_KEY) === "signed-in") {
+    removeStorage(sessionStorage, AUTH_KEY);
   }
 
+  function sampleLedger() {
+    return [
+      {id:"MB-OPEN01",type:"account",amount:500000,description:"Initial deposit · sample record",player:"Mia Marie James",other:"",at:"2026-11-01T09:15:00.000Z"},
+      {id:"MB-TX1001",type:"withdraw",amount:4500,description:"Sample transfer to external account",player:"Mia Marie James",other:"",at:"2026-11-03T11:40:00.000Z"},
+      {id:"MB-TX1002",type:"withdraw",amount:2750,description:"Sample household utility payment",player:"Mia Marie James",other:"",at:"2026-11-06T08:25:00.000Z"},
+      {id:"MB-TX1003",type:"withdraw",amount:1200,description:"Sample mobile and internet payment",player:"Mia Marie James",other:"",at:"2026-11-08T16:10:00.000Z"},
+      {id:"MB-TX1004",type:"withdraw",amount:3482.12,description:"Sample retail card purchase",player:"Mia Marie James",other:"",at:"2026-11-11T13:05:00.000Z"},
+      {id:"MB-TX1005",type:"withdraw",amount:3500,description:"Sample cash withdrawal",player:"Mia Marie James",other:"",at:"2026-11-14T10:30:00.000Z"}
+    ];
+  }
   function load() {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY));
       if (saved && Array.isArray(saved.players) && Array.isArray(saved.transactions) && Number.isFinite(saved.bank)) {
-        saved.transactions = saved.transactions.map(t => ({...t, id: t.type === "account" && /starting balance/i.test(t.description || "") ? "MB-OPEN001" : t.id, description: t.type === "account" && /starting balance/i.test(t.description || "") ? "Opening balance" : t.description}));
-        if (!saved.players.some(p => p.name.toLowerCase() === "mia marie james")) {
-          saved.players.push({id:"MB-MIA001",name:"Mia Marie James",balance:500000});
-          if (saved.bank >= 500000) saved.bank -= 500000;
-          saved.transactions.unshift({id:"MB-OPEN001",type:"account",amount:500000,description:"Opening balance",player:"Mia Marie James",other:"",at:new Date().toISOString()});
+        let account = saved.players.find(p => p.name.toLowerCase() === "mia marie james");
+        if (!account) {
+          account = {id:"MB-MIA001",name:"Mia Marie James",balance:484567.88};
+          saved.players.push(account);
+        }
+        const sampleIds = new Set(sampleLedger().map(t => t.id));
+        const hasSampleLedger = sampleLedger().every(sample => saved.transactions.some(t => t.id === sample.id));
+        if (saved.sampleLedgerVersion !== 4 || !hasSampleLedger) {
+          const nonSampleEntries = saved.transactions.filter(t => !sampleIds.has(t.id));
+          saved.transactions = [...sampleLedger(), ...nonSampleEntries];
+          saved.sampleLedgerVersion = 4;
         }
         return saved;
       }
     } catch (_) {}
-    return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[{id:"MB-OPEN001",type:"account",amount:500000,description:"Opening balance",player:"Mia Marie James",other:"",at:new Date().toISOString()}]};
+    return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:484567.88}],transactions:sampleLedger(),sampleLedgerVersion:4};
   }
-  function save() { localStorage.setItem(KEY, JSON.stringify(state)); render(); }
+  async function save(transactionPin) {
+    render();
+    if (!transactionPin) {
+      $("formMessage").textContent = "This management change is local only. Use a PIN-confirmed transaction to save shared account data.";
+      return;
+    }
+    try {
+      await bankApi({ action:"save", loginId:$("loginId").value.replace(/\s/g,""), loginPin:$("loginPin").value.trim(), transactionPin, state });
+      $("formMessage").textContent = "Saved to the shared Supabase account.";
+    } catch (err) {
+      throw err;
+    }
+  }
   function id() { return "MB-" + Math.random().toString(36).slice(2,8).toUpperCase(); }
   function playerById(value) { return state.players.find(p => p.id === value); }
   function log(type, amount, description, player, other) {
@@ -73,9 +131,8 @@
     $("playersList").classList.toggle("hidden",state.players.length===0);
     const opts = signedInAccount ? `<option value="${signedInAccount.id}">${safeText(signedInAccount.name)}</option>` : '<option value="">Account unavailable</option>';
     $("txFrom").innerHTML = opts;
-    $("txTo").innerHTML = opts;
     if (signedInAccount) $("txFrom").value = signedInAccount.id;
-    const rows = state.transactions.filter(t => t.player === "Mia Marie James" || t.other === "Mia Marie James").slice(0,20);
+    const rows = state.transactions.filter(t => t.player === "Mia Marie James" || t.other === "Mia Marie James").sort((a,b) => new Date(a.at) - new Date(b.at)).slice(0,20);
     $("historyBody").innerHTML = rows.map(t=>{
       const positive = t.type === "deposit" || t.type === "transfer-in" || t.type === "account";
       const label = ({deposit:"Deposit",withdraw:"Withdrawal",transfer:"Account transfer", "transfer-in":"Transfer received", "account":"Account opened"})[t.type] || t.type;
@@ -96,26 +153,60 @@
     const player={id:id(),name,balance};
     state.players.push(player);state.bank-=balance;log("account",balance,"Starting balance",name);$("playerDialog").close();save();
   });
-  function updateTransactionMode(){const transfer=$("txType").value==="transfer";$("toGroup").classList.toggle("hidden",!transfer);$("fromLabel").textContent=transfer?"From account": "Customer account";}
+  function updateTransactionMode(){const transfer=$("txType").value==="transfer";$("toGroup").classList.toggle("hidden",!transfer);$("fromLabel").textContent=transfer?"From account": "Customer account";$("recipientName").required=transfer;}
   $("txType").addEventListener("change",updateTransactionMode);
-  $("transactionForm").addEventListener("submit",e=>{
-    e.preventDefault();const type=$("txType").value,from=playerById($("txFrom").value),amount=Number($("txAmount").value),note=$("txNote").value.trim();
-    const msg=$("formMessage");msg.textContent="";
-    if(!from){msg.textContent="Create a customer account first.";return;}
-    if(!Number.isSafeInteger(amount)||amount<=0){msg.textContent="Enter a whole-number amount greater than zero.";return;}
-    if(type==="deposit"){
-      if(amount>state.bank){msg.textContent="The bank does not have enough funds.";return;}
-      state.bank-=amount;from.balance+=amount;log("deposit",amount,note||"Bank payment",from.name);
-    }else if(type==="withdraw"){
-      if(amount>from.balance){msg.textContent="This account does not have enough funds.";return;}
-      from.balance-=amount;state.bank+=amount;log("withdraw",amount,note||"Paid to bank",from.name);
-    }else{
-      const to=playerById($("txTo").value);
-      if(!to||to.id===from.id){msg.textContent="Choose a different account to receive the transfer.";return;}
-      if(amount>from.balance){msg.textContent="This account does not have enough funds.";return;}
-      from.balance-=amount;to.balance+=amount;log("transfer",amount,note||"Account transfer",from.name,to.name);log("transfer-in",amount,note||"Account transfer",to.name,from.name);
+  let pendingTransaction = null;
+  async function applyPendingTransaction(transactionPin) {
+    if (!pendingTransaction) return;
+    const previousState = JSON.parse(JSON.stringify(state));
+    const {type,fromId,amount,note,recipient} = pendingTransaction;
+    const from = playerById(fromId);
+    const msg = $("formMessage");
+    if (!from) { msg.textContent = "Account unavailable. No changes were made."; pendingTransaction=null; return; }
+    if (type === "deposit") {
+      if (amount > state.bank) { msg.textContent = "The bank does not have enough funds."; pendingTransaction=null; return; }
+      state.bank -= amount; from.balance += amount; log("deposit",amount,note||"Sample deposit",from.name);
+    } else if (type === "withdraw") {
+      if (amount > from.balance) { msg.textContent = "This account does not have enough funds."; pendingTransaction=null; return; }
+      from.balance -= amount; state.bank += amount; log("withdraw",amount,note||"Sample withdrawal",from.name);
+    } else {
+      if (amount > from.balance) { msg.textContent = "This account does not have enough funds."; pendingTransaction=null; return; }
+      from.balance -= amount; log("transfer",amount,note||"Sample transfer to "+recipient,from.name,recipient);
     }
-    $("txAmount").value="";$("txNote").value="";save();msg.textContent="Transaction recorded successfully.";
+    pendingTransaction = null;
+    $("txAmount").value=""; $("txNote").value=""; $("recipientName").value="";
+    $("transactionPin").value="";
+    $("transactionPinDialog").close();
+    try {
+      await save(transactionPin);
+      msg.textContent="Sample transaction recorded and saved to the shared account.";
+    } catch (err) {
+      state = previousState;
+      render();
+      msg.textContent="Save failed; no account changes were kept. " + err.message;
+    }
+  }
+  $("transactionForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    const type=$("txType").value,from=playerById($("txFrom").value),amount=Number($("txAmount").value),note=$("txNote").value.trim();
+    const msg=$("formMessage");msg.textContent="";
+    if(!from){msg.textContent="Account unavailable.";return;}
+    if(!Number.isSafeInteger(amount)||amount<=0){msg.textContent="Enter a whole-number amount greater than zero.";return;}
+    const recipient=$("recipientName").value.trim();
+    if(type==="transfer"&&!recipient){msg.textContent="Enter the recipient name or account reference.";return;}
+    if(type==="deposit"&&amount>state.bank){msg.textContent="The bank does not have enough funds.";return;}
+    if(type!=="deposit"&&amount>from.balance){msg.textContent="This account does not have enough funds.";return;}
+    pendingTransaction={type,fromId:from.id,amount,note,recipient};
+    $("transactionPin").value="";
+    $("transactionPinError").textContent="";
+    $("transactionPinDialog").showModal();
+    $("transactionPin").focus();
+  });
+  $("cancelTransactionPin").addEventListener("click",()=>{pendingTransaction=null;$("transactionPin").value="";$("transactionPinDialog").close();$("formMessage").textContent="Transaction cancelled.";});
+  $("confirmTransactionPin").addEventListener("click",e=>{
+    e.preventDefault();
+    const transactionPin = $("transactionPin").value;
+    applyPendingTransaction(transactionPin);
   });
   $("playersList").addEventListener("click",e=>{
     const btn=e.target.closest("button[data-action]");if(!btn)return;
@@ -128,14 +219,14 @@
   function ask(title,description,action){$("confirmTitle").textContent=title;$("confirmText").textContent=description;confirmAction=action;$("confirmDialog").showModal();}
   $("confirmYes").addEventListener("click",e=>{e.preventDefault();$("confirmDialog").close();if(confirmAction)confirmAction();confirmAction=null;});
   $("clearHistory").addEventListener("click",()=>{if(!state.transactions.length)return;ask("Clear transaction history?","This only clears the ledger. Account balances will not change.",()=>{state.transactions=[];save();});});
-  $("resetGame").addEventListener("click",()=>ask("Reset all account records?","All customer accounts and transaction history will be reset.",()=>{state={bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[{id:"MB-OPEN001",type:"account",amount:500000,description:"Opening balance",player:"Mia Marie James",other:"",at:new Date().toISOString()}]};save();}));
+  $("resetGame").addEventListener("click",()=>ask("Reset all account records?","All customer accounts and transaction history will be reset.",()=>{state={bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:500000}],transactions:[]};save();}));
   $("exportBtn").addEventListener("click",()=>{
     const blob=new Blob([JSON.stringify({app:"Monopoly Bank Account Portal",exportedAt:new Date().toISOString(),...state},null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="monopoly-bank-backup.json";a.click();URL.revokeObjectURL(url);
   });
   const themeButton = $("themeBtn");
-  const savedTheme = localStorage.getItem("monopoly-bank-theme");
-  if (savedTheme === "light") document.body.classList.add("light-mode");
+  const savedTheme = readStorage(localStorage, THEME_KEY);
+  if (savedTheme !== "dark") document.body.classList.add("light-mode");
   function updateThemeButton() {
     const light = document.body.classList.contains("light-mode");
     themeButton.textContent = light ? "☾ Dark mode" : "☀ Light mode";
@@ -143,7 +234,7 @@
   }
   themeButton.addEventListener("click", () => {
     document.body.classList.toggle("light-mode");
-    localStorage.setItem("monopoly-bank-theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+    writeStorage(localStorage, THEME_KEY, document.body.classList.contains("light-mode") ? "light" : "dark");
     updateThemeButton();
   });
   updateThemeButton();
