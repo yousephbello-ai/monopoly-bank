@@ -159,6 +159,7 @@
   async function applyPendingTransaction(transactionPin) {
     if (!pendingTransaction) return;
     const previousState = JSON.parse(JSON.stringify(state));
+    const submittedTransaction = pendingTransaction;
     const {type,fromId,amount,note,recipient} = pendingTransaction;
     const from = playerById(fromId);
     const msg = $("formMessage");
@@ -182,8 +183,12 @@
       msg.textContent="Sample transaction recorded and saved to the shared account.";
     } catch (err) {
       state = previousState;
+      pendingTransaction = submittedTransaction;
       render();
-      msg.textContent="Save failed; no account changes were kept. " + err.message;
+      $("transactionPinError").textContent = err.message;
+      $("transactionPin").value = "";
+      if (!$("transactionPinDialog").open) $("transactionPinDialog").showModal();
+      msg.textContent = "No changes were saved. Check the PIN and try again.";
     }
   }
   $("transactionForm").addEventListener("submit",e=>{
@@ -202,10 +207,17 @@
     $("transactionPinDialog").showModal();
     $("transactionPin").focus();
   });
-  $("cancelTransactionPin").addEventListener("click",()=>{pendingTransaction=null;$("transactionPin").value="";$("transactionPinDialog").close();$("formMessage").textContent="Transaction cancelled.";});
+  function cancelPinEntry(){pendingTransaction=null;$("transactionPin").value="";$("transactionPinDialog").close();$("formMessage").textContent="Transaction cancelled.";}
+  $("cancelTransactionPin").addEventListener("click",cancelPinEntry);
+  $("cancelTransactionPinSecondary").addEventListener("click",cancelPinEntry);
   $("confirmTransactionPin").addEventListener("click",e=>{
     e.preventDefault();
-    const transactionPin = $("transactionPin").value;
+    const transactionPin = $("transactionPin").value.trim();
+    if (!/^\d{4}$/.test(transactionPin)) {
+      $("transactionPinError").textContent = "Enter your 4-digit transaction PIN.";
+      return;
+    }
+    $("transactionPinError").textContent = "";
     applyPendingTransaction(transactionPin);
   });
   $("playersList").addEventListener("click",e=>{
