@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#171020">
   <meta name="description" content="Monopoly Bank account portal.">
   <title>Monopoly Bank</title>
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
   <section id="loginScreen" class="login-screen">
@@ -75,7 +75,7 @@
             <input id="txNote" type="text" maxlength="80" placeholder="What is this transaction for?">
             <label for="txFrom" id="fromLabel" class="legacy-hidden">Account</label><select id="txFrom" class="legacy-hidden" aria-hidden="true" tabindex="-1"></select>
             <div id="toGroup" class="hidden"><label for="recipientName">Recipient name or account reference</label><input id="recipientName" type="text" maxlength="80" placeholder="Enter recipient details"></div>
-            <div id="pinGroup" class="hidden"><label for="transferPin">Transfer PIN</label><input id="transferPin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" placeholder="Enter 4-digit transaction PIN"></div>
+            
             <button class="button button-primary button-full" type="submit">Confirm transaction <span>→</span></button>
             <p id="formMessage" class="form-message" role="status"></p>
           </form>
@@ -123,6 +123,6 @@
       });
     })();
   </script>
-  <script src="app.js?v=5" defer></script>
+  <script src="app.js?v=6" defer></script>
 </body>
 </html>
