@@ -56,7 +56,6 @@
       button.disabled = false;
     }
   }
-  $("loginButton").addEventListener("click", signIn);
   loginForm.addEventListener("submit", signIn);
   $("logoutBtn").addEventListener("click", () => {
     removeStorage(sessionStorage, AUTH_KEY);
@@ -109,7 +108,7 @@
       await bankApi({ action:"save", loginId:$("loginId").value.replace(/\s/g,""), loginPin:$("loginPin").value.trim(), transactionPin, state });
       $("formMessage").textContent = "Saved to the shared Supabase account.";
     } catch (err) {
-      $("formMessage").textContent = "Cloud save failed: " + err.message;
+      throw err;
     }
   }
   function id() { return "MB-" + Math.random().toString(36).slice(2,8).toUpperCase(); }
@@ -157,8 +156,9 @@
   function updateTransactionMode(){const transfer=$("txType").value==="transfer";$("toGroup").classList.toggle("hidden",!transfer);$("fromLabel").textContent=transfer?"From account": "Customer account";$("recipientName").required=transfer;}
   $("txType").addEventListener("change",updateTransactionMode);
   let pendingTransaction = null;
-  function applyPendingTransaction(transactionPin) {
+  async function applyPendingTransaction(transactionPin) {
     if (!pendingTransaction) return;
+    const previousState = JSON.parse(JSON.stringify(state));
     const {type,fromId,amount,note,recipient} = pendingTransaction;
     const from = playerById(fromId);
     const msg = $("formMessage");
@@ -177,7 +177,14 @@
     $("txAmount").value=""; $("txNote").value=""; $("recipientName").value="";
     $("transactionPin").value="";
     $("transactionPinDialog").close();
-    save(transactionPin);
+    try {
+      await save(transactionPin);
+      msg.textContent="Sample transaction recorded and saved to the shared account.";
+    } catch (err) {
+      state = previousState;
+      render();
+      msg.textContent="Save failed; no account changes were kept. " + err.message;
+    }
   }
   $("transactionForm").addEventListener("submit",e=>{
     e.preventDefault();
