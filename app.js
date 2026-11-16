@@ -128,7 +128,7 @@
     const player={id:id(),name,balance};
     state.players.push(player);state.bank-=balance;log("account",balance,"Starting balance",name);$("playerDialog").close();save();
   });
-  function updateTransactionMode(){const transfer=$("txType").value==="transfer";$("toGroup").classList.toggle("hidden",!transfer);$("pinGroup").classList.toggle("hidden",!transfer);$("fromLabel").textContent=transfer?"From account": "Customer account";$("transferPin").required=transfer;$("recipientName").required=transfer;}
+  function updateTransactionMode(){const transfer=$("txType").value==="transfer";$("toGroup").classList.toggle("hidden",!transfer);$("fromLabel").textContent=transfer?"From account": "Customer account";$("recipientName").required=transfer;}
   $("txType").addEventListener("change",updateTransactionMode);
   $("transactionForm").addEventListener("submit",e=>{
     e.preventDefault();const type=$("txType").value,from=playerById($("txFrom").value),amount=Number($("txAmount").value),note=$("txNote").value.trim();
