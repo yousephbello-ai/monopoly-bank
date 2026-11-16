@@ -4,9 +4,9 @@
   const AUTH_KEY = "monopoly-bank-demo-auth";
   const THEME_KEY = "monopoly-bank-theme";
   const STARTING_BANK = 120000000;
-  const SHARED_LOGIN_ID = "482731905614";
-  const SHARED_LOGIN_PIN = "071999";
-  const DISPLAY_ACCOUNT_ID = SHARED_LOGIN_ID;
+  const API_URL = "https://jzzfgvokewysinfvjtkx.supabase.co/functions/v1/monopoly-bank";
+  const API_KEY = "sb_publishable_U3RSQ6gP5Fer2TBOV2LOvA_UAK1Lnc3";
+  const DISPLAY_ACCOUNT_ID = "482731905614";
   const $ = (id) => document.getElementById(id);
   const money = (amount) => "$" + Number(amount || 0).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
   const safeText = (value) => String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -22,22 +22,39 @@
     $("appShell").classList.remove("app-locked");
     render();
   }
-  function signIn(event) {
+  async function bankApi(payload) {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": API_KEY },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "The server could not complete the request.");
+    return result;
+  }
+  async function signIn(event) {
     if (event) event.preventDefault();
     const accountId = $("loginId").value.replace(/\s/g, "");
     const pin = $("loginPin").value.trim();
     const error = $("loginError");
+    const button = $("loginButton");
     if (!/^\d{12}$/.test(accountId) || !/^\d{6}$/.test(pin)) {
       error.textContent = "Enter a 12-digit account ID and a 6-digit PIN.";
       return;
     }
-    if (accountId !== SHARED_LOGIN_ID || pin !== SHARED_LOGIN_PIN) {
-      error.textContent = "The account ID or PIN is incorrect.";
-      return;
+    button.disabled = true;
+    error.textContent = "Checking account…";
+    try {
+      const result = await bankApi({ action: "get", loginId: accountId, loginPin: pin });
+      state = result.state || { bank: STARTING_BANK-500000, players:[{id:"MB-MIA001",name:"Mia Marie James",balance:484567.88}], transactions:sampleLedger(), sampleLedgerVersion:4 };
+      writeStorage(sessionStorage, AUTH_KEY, "signed-in");
+      error.textContent = "";
+      showDashboard();
+    } catch (err) {
+      error.textContent = err.message;
+    } finally {
+      button.disabled = false;
     }
-    writeStorage(sessionStorage, AUTH_KEY, "signed-in");
-    error.textContent = "";
-    showDashboard();
   }
   $("loginButton").addEventListener("click", signIn);
   loginForm.addEventListener("submit", signIn);
@@ -48,8 +65,7 @@
     $("loginPin").value = "";
   });
   if (readStorage(sessionStorage, AUTH_KEY) === "signed-in") {
-    $("loginScreen").classList.add("hidden");
-    $("appShell").classList.remove("app-locked");
+    removeStorage(sessionStorage, AUTH_KEY);
   }
 
   function sampleLedger() {
@@ -83,7 +99,19 @@
     } catch (_) {}
     return {bank:STARTING_BANK-500000,players:[{id:"MB-MIA001",name:"Mia Marie James",balance:484567.88}],transactions:sampleLedger(),sampleLedgerVersion:4};
   }
-  function save() { localStorage.setItem(KEY, JSON.stringify(state)); render(); }
+  async function save(transactionPin) {
+    render();
+    if (!transactionPin) {
+      $("formMessage").textContent = "This management change is local only. Use a PIN-confirmed transaction to save shared account data.";
+      return;
+    }
+    try {
+      await bankApi({ action:"save", loginId:$("loginId").value.replace(/\s/g,""), loginPin:$("loginPin").value.trim(), transactionPin, state });
+      $("formMessage").textContent = "Saved to the shared Supabase account.";
+    } catch (err) {
+      $("formMessage").textContent = "Cloud save failed: " + err.message;
+    }
+  }
   function id() { return "MB-" + Math.random().toString(36).slice(2,8).toUpperCase(); }
   function playerById(value) { return state.players.find(p => p.id === value); }
   function log(type, amount, description, player, other) {
@@ -104,7 +132,6 @@
     $("playersList").classList.toggle("hidden",state.players.length===0);
     const opts = signedInAccount ? `<option value="${signedInAccount.id}">${safeText(signedInAccount.name)}</option>` : '<option value="">Account unavailable</option>';
     $("txFrom").innerHTML = opts;
-    $("txTo").innerHTML = opts;
     if (signedInAccount) $("txFrom").value = signedInAccount.id;
     const rows = state.transactions.filter(t => t.player === "Mia Marie James" || t.other === "Mia Marie James").sort((a,b) => new Date(a.at) - new Date(b.at)).slice(0,20);
     $("historyBody").innerHTML = rows.map(t=>{
@@ -130,7 +157,7 @@
   function updateTransactionMode(){const transfer=$("txType").value==="transfer";$("toGroup").classList.toggle("hidden",!transfer);$("fromLabel").textContent=transfer?"From account": "Customer account";$("recipientName").required=transfer;}
   $("txType").addEventListener("change",updateTransactionMode);
   let pendingTransaction = null;
-  function applyPendingTransaction() {
+  function applyPendingTransaction(transactionPin) {
     if (!pendingTransaction) return;
     const {type,fromId,amount,note,recipient} = pendingTransaction;
     const from = playerById(fromId);
@@ -150,8 +177,7 @@
     $("txAmount").value=""; $("txNote").value=""; $("recipientName").value="";
     $("transactionPin").value="";
     $("transactionPinDialog").close();
-    save();
-    msg.textContent="Sample transaction recorded successfully.";
+    save(transactionPin);
   }
   $("transactionForm").addEventListener("submit",e=>{
     e.preventDefault();
@@ -172,8 +198,8 @@
   $("cancelTransactionPin").addEventListener("click",()=>{pendingTransaction=null;$("transactionPin").value="";$("transactionPinDialog").close();$("formMessage").textContent="Transaction cancelled.";});
   $("confirmTransactionPin").addEventListener("click",e=>{
     e.preventDefault();
-    if($("transactionPin").value!=="1999"){$("transactionPinError").textContent="Incorrect PIN. No changes were made.";return;}
-    applyPendingTransaction();
+    const transactionPin = $("transactionPin").value;
+    applyPendingTransaction(transactionPin);
   });
   $("playersList").addEventListener("click",e=>{
     const btn=e.target.closest("button[data-action]");if(!btn)return;
